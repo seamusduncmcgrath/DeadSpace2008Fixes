@@ -9,6 +9,13 @@ A simple ASI plugin for Dead Space (2008) that adds proper borderless windowed, 
 
 If I get around to it there should be more features soon, probably will be a mouse fix and intro video skip
 
+## Comparison Of Texture Filtering On Vs Off
+**On:**
+<img width="1919" height="1079" alt="on" src="https://github.com/user-attachments/assets/c93687c0-b7e0-421c-8e58-8c5f66e1f504" />
+**Off:**
+<img width="1913" height="1052" alt="off" src="https://github.com/user-attachments/assets/45e88b85-bcc5-42fb-b4cc-9212a8a837fe" />
+
+
 ## Installation
 
 This mod requires an ASI loader to inject into the game.
