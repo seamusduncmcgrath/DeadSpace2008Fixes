@@ -16,8 +16,41 @@ HRESULT __stdcall hkSetSamplerState(IDirect3DDevice9* pDevice, DWORD Sampler, D3
     return oSetSamplerState(pDevice, Sampler, Type, Value);
 }
 
+HWND WINAPI hkCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
+{
+    if (lpWindowName && strcmp(lpWindowName, "Dead Space") == 0)
+    {
+        //strip standard borders
+        dwStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+        dwStyle |= WS_POPUP;
+
+        //strip extended borders
+        dwExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+
+        X = 0;
+        Y = 0;
+        nWidth = GetSystemMetrics(SM_CXSCREEN);
+        nHeight = GetSystemMetrics(SM_CXSCREEN);
+    }
+    return oCreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
+}
+
+//much better than before
+void InitialiseWindowHook()
+{
+    if (MH_Initialize() != MH_OK) return;
+
+    LPVOID pCreateWindowExA = GetProcAddress(GetModuleHandleA("user32.dll"), "CreateWindowExA");
+
+    MH_CreateHook(pCreateWindowExA, &hkCreateWindowExA, reinterpret_cast<LPVOID*>(&oCreateWindowExA));
+    MH_EnableHook(pCreateWindowExA);
+}
+
+
 DWORD WINAPI MainThread(LPVOID)
 {
+    InitialiseWindowHook();
+
     //wait for the window
     HWND hwnd = nullptr;
 
@@ -27,8 +60,6 @@ DWORD WINAPI MainThread(LPVOID)
         hwnd = FindWindowA(nullptr, "Dead Space");
         Sleep(100);
     }
-
-    Sleep(1000);
 
     if (MH_Initialize() != MH_OK) return 0;
 
@@ -59,30 +90,6 @@ DWORD WINAPI MainThread(LPVOID)
     }
 
     pD3D->Release();
-
-    //back to borderless windowed stuff
-    HMONITOR monitor = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-    MONITORINFO mi = { sizeof(mi) };
-    GetMonitorInfo(monitor, &mi);
-
-    int width = mi.rcMonitor.right - mi.rcMonitor.left;
-    int height = mi.rcMonitor.bottom - mi.rcMonitor.top;
-
-
-    //removes standard borders
-    LONG style = GetWindowLong(hwnd, GWL_STYLE);
-    style &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
-    style |= WS_POPUP;
-    SetWindowLong(hwnd, GWL_STYLE, style);
-
-    //removes extended borders
-    LONG exStyle = GetWindowLong(hwnd, GWL_EXSTYLE);
-    exStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
-    SetWindowLong(hwnd, GWL_EXSTYLE, exStyle);
-
-
-    SetWindowPos(hwnd, HWND_TOP, mi.rcMonitor.left, mi.rcMonitor.top, width, height,
-        SWP_FRAMECHANGED | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
 
     return 0;
 }
