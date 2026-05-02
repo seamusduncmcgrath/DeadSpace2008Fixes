@@ -16,6 +16,7 @@ HRESULT __stdcall hkSetSamplerState(IDirect3DDevice9* pDevice, DWORD Sampler, D3
     return oSetSamplerState(pDevice, Sampler, Type, Value);
 }
 
+
 HWND WINAPI hkCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam)
 {
     if (lpWindowName && strcmp(lpWindowName, "Dead Space") == 0)
@@ -27,23 +28,47 @@ HWND WINAPI hkCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWind
         //strip extended borders
         dwExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
 
-        X = 0;
-        Y = 0;
-        nWidth = GetSystemMetrics(SM_CXSCREEN);
-        nHeight = GetSystemMetrics(SM_CXSCREEN);
+        X = 0; Y = 0; 
+        nWidth = GetSystemMetrics(SM_CXSCREEN); nHeight = GetSystemMetrics(SM_CYSCREEN);
     }
     return oCreateWindowExA(dwExStyle, lpClassName, lpWindowName, dwStyle, X, Y, nWidth, nHeight, hWndParent, hMenu, hInstance, lpParam);
 }
 
-//much better than before
+
+//these 2 are also needed for true borderless
+BOOL WINAPI hkAdjustWindowRect(LPRECT lpRect, DWORD dwStyle, BOOL bMenu)
+{
+    dwStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+    return oAdjustWindowRect(lpRect, dwStyle, bMenu);
+}
+
+
+BOOL WINAPI hkAdjustWindowRectEx(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle)
+{
+    //strips standard & extended borders
+    dwStyle &= ~(WS_CAPTION | WS_THICKFRAME | WS_MINIMIZE | WS_MAXIMIZE | WS_SYSMENU);
+    dwExStyle &= ~(WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE | WS_EX_STATICEDGE);
+
+    return oAdjustWindowRectEx(lpRect, dwStyle, bMenu, dwExStyle);
+}
+
+
 void InitialiseWindowHook()
 {
     if (MH_Initialize() != MH_OK) return;
 
-    LPVOID pCreateWindowExA = GetProcAddress(GetModuleHandleA("user32.dll"), "CreateWindowExA");
-
+    HMODULE hUser32 = GetModuleHandleA("user32.dll");
+    LPVOID pCreateWindowExA = GetProcAddress(hUser32, "CreateWindowExA");
+    LPVOID pAdjustWindowRect = GetProcAddress(hUser32, "AdjustWindowRect");
+    LPVOID pAdjustWindowRectEx = GetProcAddress(hUser32, "AdjustWindowRectEx");
+    
     MH_CreateHook(pCreateWindowExA, &hkCreateWindowExA, reinterpret_cast<LPVOID*>(&oCreateWindowExA));
+    MH_CreateHook(pAdjustWindowRect, &hkAdjustWindowRect, reinterpret_cast<LPVOID*>(&oAdjustWindowRect));
+    MH_CreateHook(pAdjustWindowRectEx, &hkAdjustWindowRectEx, reinterpret_cast<LPVOID*>(&oAdjustWindowRectEx));
+
     MH_EnableHook(pCreateWindowExA);
+    MH_EnableHook(pAdjustWindowRect);
+    MH_EnableHook(pAdjustWindowRectEx);
 }
 
 
@@ -60,8 +85,6 @@ DWORD WINAPI MainThread(LPVOID)
         hwnd = FindWindowA(nullptr, "Dead Space");
         Sleep(100);
     }
-
-    if (MH_Initialize() != MH_OK) return 0;
 
     //create a dummy D3D9 device to steal vtable
     IDirect3D9* pD3D = Direct3DCreate9(D3D_SDK_VERSION);

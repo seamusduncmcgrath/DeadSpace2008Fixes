@@ -7,3 +7,9 @@ SetSamplerState_t oSetSamplerState = nullptr;
 
 typedef HWND(WINAPI* CreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 CreateWindowExA_t oCreateWindowExA = nullptr;
+
+typedef BOOL(WINAPI* AdjustWindowRect_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu);
+AdjustWindowRect_t oAdjustWindowRect = nullptr;
+
+typedef BOOL(WINAPI* AdjustWindowRectEx_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle);
+AdjustWindowRectEx_t oAdjustWindowRectEx = nullptr;
