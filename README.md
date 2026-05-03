@@ -1,6 +1,6 @@
 # DeadSpace2008Fixes
 
-A simple ASI plugin for Dead Space (2008) that adds proper borderless windowed, as well as 16x anisitropic filtering 
+A ASI plugin for Dead Space (2008) that adds proper borderless windowed, as well as 16x anisitropic filtering and numerous other fixes and improvements
 
 ## Features.
 
