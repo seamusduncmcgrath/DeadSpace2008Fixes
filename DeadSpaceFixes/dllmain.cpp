@@ -5,14 +5,17 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
-#include "minhook.h"
-#include "typedefs.h"
-#include "windowhooks.h"
+#include "MinHook.h"
+#include "TypeDefs.h"
+#include "WindowHooks.h"
+#include "Utils.h"
+#include "InputHooks.h"
 
 //Globals
 SetSamplerState_t oSetSamplerState = nullptr;
-DirectInput8Create_t oDirectInput8Create = nullptr;
-EnumDevices_t oEnumDevices = nullptr;
+
+uintptr_t subtitleHookReturn = 0;
+float subtitleScale = 1.0f;
 
 //this forces anisitropic filtering to 16x on all surfaces
 HRESULT __stdcall hkSetSamplerState(IDirect3DDevice9* pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value)
@@ -28,101 +31,37 @@ HRESULT __stdcall hkSetSamplerState(IDirect3DDevice9* pDevice, DWORD Sampler, D3
     return oSetSamplerState(pDevice, Sampler, Type, Value);
 }
 
-
-HRESULT __stdcall hkEnumDevices(IDirectInput8* pDI, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
-{
-    //we only scan for mouse and keyboard, should reduce startup times by like 5 seconds. Controllers will be fine since they use XInput
-    oEnumDevices(pDI, DI8DEVCLASS_POINTER, lpCallback, pvRef, dwFlags);
-
-    oEnumDevices(pDI, DI8DEVCLASS_KEYBOARD, lpCallback, pvRef, dwFlags);
-
-    return DI_OK;
-}
-
-//needed to skip dinput enum devices
-HRESULT WINAPI hkDirectInput8Create(HINSTANCE hinst, DWORD dwVersion, REFIID riidltf, LPVOID* ppvOut, LPUNKNOWN punkOuter)
-{
-    HRESULT hr = oDirectInput8Create(hinst, dwVersion, riidltf, ppvOut, punkOuter);
-
-    if (SUCCEEDED(hr) && ppvOut && *ppvOut)
-    {
-        //steal the vtable
-        void** pVtable = *reinterpret_cast<void***>(*ppvOut);
-        void* pEnumDevicesTarget = pVtable[4];
-
-        //we only want to create this hook once
-        if (oEnumDevices == nullptr)
-        {
-            MH_CreateHook(pEnumDevicesTarget, &hkEnumDevices, reinterpret_cast<LPVOID*>(&oEnumDevices));
-            MH_EnableHook(pEnumDevicesTarget);
-        }
-    }
-    //hand it back to the engine
-    return hr;
-}
-
-
-void InitialiseInputHooks()
-{
-    if (MH_Initialize() != MH_OK) return;
-
-    //dinput8 hook
-    HMODULE hDinput8 = LoadLibraryA("dinput8.dll");
-    if (hDinput8)
-    {
-        LPVOID pDirectInput8Create = GetProcAddress(hDinput8, "DirectInput8Create");
-        MH_CreateHook(pDirectInput8Create, &hkDirectInput8Create, reinterpret_cast<LPVOID*>(&oDirectInput8Create));
-        MH_EnableHook(pDirectInput8Create);
-    }
-}
-
-
-uintptr_t FindPattern(HMODULE hModule, const char* signature)
-{
-    static auto patternToByte = [](const char* pattern) {
-        auto bytes = std::vector<int>{};
-        auto start = const_cast<char*>(pattern);
-        auto end = const_cast<char*>(pattern) + strlen(pattern);
-
-        for (auto current = start; current < end; ++current) {
-            if (*current == '?') {
-                ++current;
-                if (*current == '?') ++current;
-                bytes.push_back(-1);
-            }
-            else {
-                bytes.push_back(strtoul(current, &current, 16));
-            }
-        }
-        return bytes;
-        };
-
-    auto dosHeader = (PIMAGE_DOS_HEADER)hModule;
-    auto ntHeaders = (PIMAGE_NT_HEADERS)((std::uint8_t*)hModule + dosHeader->e_lfanew);
-
-    auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
-    auto patternBytes = patternToByte(signature);
-    auto scanBytes = reinterpret_cast<std::uint8_t*>(hModule);
-
-    auto s = patternBytes.size();
-    auto d = patternBytes.data();
-
-    for (auto i = 0ul; i < sizeOfImage - s; ++i) {
-        bool found = true;
-        for (auto j = 0ul; j < s; ++j) {
-            if (scanBytes[i + j] != d[j] && d[j] != -1) {
-                found = false;
-                break;
-            }
-        }
-        if (found) return reinterpret_cast<uintptr_t>(&scanBytes[i]);
-    }
-    return 0;
-}
     
+__declspec(naked) void hkSubtitleScale() //note to self comment well
+{
+    __asm //I fucking hate assembly
+    {
+        pushfd
+
+        cmp edi, 0 //is it the inventory or other menus?
+        je original_code //if yes skip to original code
+
+        //if it's a subtitle replace scale param
+        push eax
+        mov eax, dword ptr [subtitleScale]
+        mov dword ptr [ebp+0x18], eax
+        pop eax
+
+    original_code:
+        popfd //restore cpu flags
+
+        mulss xmm0, dword ptr [ebp+0x18] //original instruction
+
+        jmp [subtitleHookReturn] //jump back to engine
+    }
+}
 
 DWORD WINAPI MainThread(LPVOID)
 {
+    #ifdef _DEBUG
+    InitialiseConsole();
+    #endif
+
     InitialiseInputHooks();
     InitialiseWindowHooks();
 
@@ -137,6 +76,7 @@ DWORD WINAPI MainThread(LPVOID)
 
     if (patternAddress != 0)
     {
+        DEBUG_LOG("Signature for high precision timer found at 0x%X", patternAddress);
         void* patchAddress = reinterpret_cast<void*>(patternAddress + 7);
 
         DWORD oldProtect;
@@ -147,6 +87,39 @@ DWORD WINAPI MainThread(LPVOID)
             pByte[1] = 0x90;
 
             VirtualProtect(patchAddress, 2, oldProtect, &oldProtect);
+            DEBUG_LOG("Timer patched");
+        }
+    }
+
+    const char* subtitleSignature = "83 7E 1C 00 F3 0F 10 46 44 F3 0F 59 45 18 53 8B 5D 1C";
+    uintptr_t subtitleAddress = FindPattern(hExe, subtitleSignature);
+
+    if (subtitleAddress != 0)
+    {
+        void* patchAddress = reinterpret_cast<void*>(subtitleAddress + 9);
+        DEBUG_LOG("Found subtitle scale hook at 0x%p", patchAddress);
+
+        //calculate the correct scale
+        //DS1 was only designed for up to 720p, so subtitles don't scale above it, so we just (try to) correctly scale it here
+        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+        subtitleScale = screenHeight / 1080.0f; //720 would be better but I'm to lazy to figure it out
+
+        DEBUG_LOG("Subtitle scale is now %f", subtitleScale);
+
+        subtitleHookReturn = reinterpret_cast<uintptr_t>(patchAddress) + 5;
+
+        DWORD oldProtect;
+        if (VirtualProtect(patchAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect))
+        {
+            BYTE* pByte = reinterpret_cast<BYTE*>(patchAddress);
+
+            //write the E9 JMP
+            pByte[0] = 0xE9;
+
+            *reinterpret_cast<uintptr_t*>(pByte + 1) = reinterpret_cast<uintptr_t>(&hkSubtitleScale) - reinterpret_cast<uintptr_t>(patchAddress) - 5;
+
+            VirtualProtect(patchAddress, 5, oldProtect, &oldProtect);
+            DEBUG_LOG("Subtitles scaled");
         }
     }
 
@@ -199,7 +172,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID)
 
         //CPU affinity fix
         DWORD processorCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-
+        DEBUG_LOG("Core/Thread count is %d", processorCount);
         //on DS1 if the CPU core/thread count is above 8 it causes crashes, so this caps it to 8
         if (processorCount > 8) //might work at 10? Lots of people say the issue is with 10 or 8
         {

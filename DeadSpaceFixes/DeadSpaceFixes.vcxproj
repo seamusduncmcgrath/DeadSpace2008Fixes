@@ -157,7 +157,9 @@
     <ClInclude Include="include\MinHook.h" />
     <ClInclude Include="include\table32.h" />
     <ClInclude Include="include\trampoline.h" />
+    <ClInclude Include="InputHooks.h" />
     <ClInclude Include="TypeDefs.h" />
+    <ClInclude Include="Utils.h" />
     <ClInclude Include="WindowHooks.h" />
   </ItemGroup>
   <ItemGroup>
@@ -166,6 +168,8 @@
     <ClCompile Include="include\hde32.c" />
     <ClCompile Include="include\hook.c" />
     <ClCompile Include="include\trampoline.c" />
+    <ClCompile Include="InputHooks.cpp" />
+    <ClCompile Include="Utils.cpp" />
     <ClCompile Include="WindowHooks.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

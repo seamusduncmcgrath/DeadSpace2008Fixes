@@ -45,6 +45,12 @@
     <ClInclude Include="WindowHooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHooks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -63,6 +69,12 @@
       <Filter>Source Files\MinHook</Filter>
     </ClCompile>
     <ClCompile Include="WindowHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
