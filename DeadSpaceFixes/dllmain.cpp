@@ -1,21 +1,35 @@
+#define WIN32_LEAN_AND_MEAN
+#define _CRT_SECURE_NO_WARNINGS
+
+#include <winsock2.h>
 #include <windows.h>
+#include <nb30.h>
 #include <d3d9.h>
 #include <dinput.h>
 #include <string>
 #include <iostream>
 #include <vector>
 #include <cstdint>
+
 #include "MinHook.h"
 #include "TypeDefs.h"
 #include "WindowHooks.h"
 #include "Utils.h"
 #include "InputHooks.h"
 
+
 //Globals
 SetSamplerState_t oSetSamplerState = nullptr;
-
+SetThreadAffinityMask_t oSetThreadAffinityMask = nullptr;
+SetThreadIdealProcessor_t oSetThreadIdealProcessor = nullptr;
+WSAStartup_t OriginalWSAStartup = nullptr;
+Netbios_t OriginalNetbios = nullptr;
+EndScene_t oEndScene = nullptr;
+SaveStringCopy_t oSaveStringCopy = nullptr;
 uintptr_t subtitleHookReturn = 0;
-float subtitleScale = 1.0f;
+
+float subtitleScale = 1.0f; //feel like 0.8 is a better baseline, subtitles clip out less then
+
 
 //this forces anisitropic filtering to 16x on all surfaces
 HRESULT __stdcall hkSetSamplerState(IDirect3DDevice9* pDevice, DWORD Sampler, D3DSAMPLERSTATETYPE Type, DWORD Value)
@@ -31,10 +45,41 @@ HRESULT __stdcall hkSetSamplerState(IDirect3DDevice9* pDevice, DWORD Sampler, D3
     return oSetSamplerState(pDevice, Sampler, Type, Value);
 }
 
+
+//these 2 hooks kill all network/telemetry stuff, game should start a bit faster and be fully offline now
+int WINAPI hkWSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
+{
+    //we return WSASYSNOTREADY (10091) here so the game thinks the network is unavailable
+    return 10091;
+}
+
+UCHAR WINAPI hkNetbios(PNCB pncb)
+{
+    //we return NRC_SYSTEM (0x40) here so it can't scan network devices
+    return 0x40;
+}
+
+
+errno_t hkSaveStringCopy(wchar_t* dest, wchar_t* src) //just making the save file string handling a bit better
+{
+    if (src != nullptr)
+    {
+        //instead of _wcscpy_s which aborts the game on overflow we use wcsncpy to truncate the path to 127 chars
+        //doesn't fix really anything but is safer
+        wcsncpy(dest, src, 127);
+
+        dest[127] = L'\0'; //ensure string is null terminated
+        return 0;
+    }
+    //theres a bug with the game where it clears 128 bytes rather than 128 wide characters (256 bytes), this should fix it
+    memset(dest, 0, 128 * sizeof(wchar_t));
+    return -1;
+}
+
     
 __declspec(naked) void hkSubtitleScale() //note to self comment well
 {
-    __asm //I fucking hate assembly
+    __asm
     {
         pushfd
 
@@ -56,6 +101,28 @@ __declspec(naked) void hkSubtitleScale() //note to self comment well
     }
 }
 
+
+void InitialiseHooks()
+{
+    HMODULE hWinSock = GetModuleHandleA("ws2_32.dll");
+    FARPROC pWSAStartup = GetProcAddress(hWinSock, "WSAStartup");
+    if (pWSAStartup)
+    {
+        MH_CreateHook(pWSAStartup, &hkWSAStartup, reinterpret_cast<LPVOID*>(&OriginalWSAStartup));
+        MH_EnableHook(pWSAStartup);
+        DEBUG_LOG("WSAStartup hooked, all network/telemetry blocked");
+    }
+    HMODULE hNetApi = LoadLibraryA("netapi32.dll"); //some games don't properly load this so we LoadLibrary it
+    FARPROC pNetbios = GetProcAddress(hNetApi, "Netbios");
+    if (pNetbios)
+    {
+        MH_CreateHook(pNetbios, &hkNetbios, reinterpret_cast<LPVOID*>(&OriginalNetbios));
+        MH_EnableHook(pNetbios);
+        DEBUG_LOG("Netbios also hooked, weird NAT harvester is now blocked");
+    }
+}
+
+
 DWORD WINAPI MainThread(LPVOID)
 {
     #ifdef _DEBUG
@@ -64,6 +131,7 @@ DWORD WINAPI MainThread(LPVOID)
 
     InitialiseInputHooks();
     InitialiseWindowHooks();
+    InitialiseHooks();
 
     HMODULE hExe = GetModuleHandleA(nullptr);
 
@@ -102,7 +170,7 @@ DWORD WINAPI MainThread(LPVOID)
         //calculate the correct scale
         //DS1 was only designed for up to 720p, so subtitles don't scale above it, so we just (try to) correctly scale it here
         int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-        subtitleScale = screenHeight / 1080.0f; //720 would be better but I'm to lazy to figure it out
+        //subtitleScale = screenHeight / 1080.0f; //720 would be better but I'm to lazy to figure it out
 
         DEBUG_LOG("Subtitle scale is now %f", subtitleScale);
 
@@ -120,6 +188,40 @@ DWORD WINAPI MainThread(LPVOID)
 
             VirtualProtect(patchAddress, 5, oldProtect, &oldProtect);
             DEBUG_LOG("Subtitles scaled");
+        }
+    }
+
+    //I figured out I can set my own custom version string on the main menu so why not lol
+    const char* versionSignature = "68 ? ? ? ? 6A 64 68 ? ? ? ? E8 ? ? ? ? 83 C4 1C";
+    uintptr_t versionAddress = FindPattern(hExe, versionSignature);
+    if (versionAddress != 0)
+    {
+        char* pVersionString = *reinterpret_cast<char**>(versionAddress + 8);
+        DEBUG_LOG("Found version number at 0x%p", pVersionString);
+        DEBUG_LOG("Game version is %s", pVersionString);
+        
+        const char* customVersion = "DeadSpaceFixes Installed!";
+
+        DWORD oldProtect;
+        if (VirtualProtect(pVersionString, 100, PAGE_EXECUTE_READWRITE, &oldProtect))
+        {
+            strcpy_s(pVersionString, 100, customVersion);
+            VirtualProtect(pVersionString, 100, oldProtect, &oldProtect);
+            DEBUG_LOG("Set custom game version string to %s", customVersion);
+        }
+    }
+
+    const char* saveStringSignature = "8B 44 24 08 85 C0 74 14 50 8B 44 24 08 68 80 00"; //credit to marker patch for this
+    uintptr_t  saveStringAddress = FindPattern(hExe, saveStringSignature);
+    if (saveStringAddress != 0)
+    {
+        void* pSaveCopyTarget = reinterpret_cast<void*>(saveStringAddress);
+        DEBUG_LOG("Found save string handling at 0x%p", pSaveCopyTarget);
+
+        if (MH_CreateHook(pSaveCopyTarget, &hkSaveStringCopy, reinterpret_cast<LPVOID*>(&oSaveStringCopy)) == MH_OK)
+        {
+            MH_EnableHook(pSaveCopyTarget);
+            DEBUG_LOG("Save string handling hooked, should be safer");
         }
     }
 
