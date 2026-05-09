@@ -1,28 +1,26 @@
 # DeadSpace2008Fixes
 
-A ASI plugin for Dead Space (2008) that adds proper borderless windowed, as well as 16x anisotropic filtering and numerous other fixes and improvements
+A mod for Dead Space (2008) that adds numerous fixes and improvements
 
 ## Features
 
 * **Borderless Windowed:** Adds a simple borderless windowed mode that fixes gamma issues and alt-tabbing bugs. To use, simply disable fullscreen in the game settings
-* **(Experimental) Fixed Crashes On 10+ Core CPU's:** The crashes on modern 10+ core CPUs should be completely fixed. (I do not own a 10+ core CPU to 100% confirm, but the array overflow has been patched).
+* **(Experimental) Fixed Crashes On 10+ Core CPUs:** The crashes on modern 10+ core CPUs should be fixed. (I do not own a 10+ core CPU to 100% confirm, but the array overflow has been patched).
 * **Reduced Issues At High FPS:** A large amount of the physics/ragdoll issues at 60+ FPS are caused by the game relying on GetTickCount, which is really inaccurate. I found an unused developer flag in the engine that allows you to swap GetTickCount for QueryPerformanceCounter, which is much more precise. Visceral likely disabled this because older AMD CPUs had desync issues, but on modern hardware, it works perfectly. *Note:* I still recommend capping the FPS to around 120-180. I was able to complete QTEs and had no issues with ragdolls at a 180 FPS cap, but if it goes above ~200 FPS, the issues start to come back.
-* **Significantly Faster Startup Times:** Removed the insanely slow check for legacy DirectInput8 devices, this takes about 5 seconds off the boot time! This does mean the game won't pick up steering wheels or pre-2007 joysticks, but really any modern Xbox/PlayStation controllers running through XInput will still work perfectly.
+* **Significantly Faster Startup Times:** Removed the insanely slow check for legacy DirectInput8 devices, this takes about 5 seconds off the boot time! This does mean the game won't pick up steering wheels or pre-2007 joysticks, but any modern Xbox/PlayStation controllers running through XInput will still work perfectly.
 * **Anisitropic Filtering:** Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero performance loss on modern hardware and hugely improves texture clarity.
 * **High Resolution Subtitle Fix:** Fixes the too small subtitles at resolutions above 720p, no need to squint to see subtitles at 4k anymore!
 * **Safer Save String Handling:** Improved the save string handling; Viceral had left an issue where it would clear 128 bytes rather than 128 wide characters (256 bytes), which would cause garbage data and could cause issues and crashes.
 * **Removed Telemetry:** Removed some random telemetry that would tell EA what OS you are on and get your device MAC address. This will make the game fully offline and reduce startup times a bit.
+* **Native PS4/5 & Switch Controller Support:** The game now supports PS4/5 and Nintendo switch controllers using SDL3.
 
 
 ## Installation
 
-This mod requires an ASI loader to inject into the game.
-
-1. Download the **32-bit (x86)** version of [Ultimate ASI Loader](https://github.com/ThirteenAG/Ultimate-ASI-Loader).
-2. Extract the downloaded file and rename it to `dinput8.dll`.
-3. Download the latest release of this mod from the Releases tab.
-4. Place `dinput8.dll` and the downloaded `.asi` plugin directly into your Dead Space game folder (where `Dead Space.exe` is located).
-5. Launch the game, and on the bottom right of the main menu should say "DeadSpaceFixes Installed!" rather than the game version number.
+1. Download the latest release of this mod from the Releases tab.
+2. Extract the downloaded file.
+3. Place `xinput1_3.dll` and `SDL3.dll` directly into your Dead Space game folder (where `Dead Space.exe` is located).
+4. Launch the game, and on the bottom right of the main menu should say "DeadSpaceFixes Installed!" rather than the game version number.
 
 
 ## Comparison Of Texture Filtering On Vs Off
