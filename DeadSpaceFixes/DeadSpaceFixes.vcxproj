@@ -79,14 +79,16 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <OutputFile>$(OutDir)$(TargetName).asi</OutputFile>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
+      <AdditionalDependencies>SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -100,14 +102,16 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <OutputFile>$(OutDir)$(TargetName).asi</OutputFile>
-      <AdditionalDependencies>d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
+      <AdditionalDependencies>SDL3.lib;d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -119,14 +123,16 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <OutputFile>$(OutDir)$(TargetName).asi</OutputFile>
-      <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
+      <AdditionalDependencies>SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -140,37 +146,45 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
-      <OutputFile>$(OutDir)$(TargetName).asi</OutputFile>
-      <AdditionalDependencies>d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
+      <AdditionalDependencies>SDL3.lib;d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
+      <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
+      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="framework.h" />
-    <ClInclude Include="include\buffer.h" />
-    <ClInclude Include="include\hde32.h" />
-    <ClInclude Include="include\MinHook.h" />
-    <ClInclude Include="include\table32.h" />
-    <ClInclude Include="include\trampoline.h" />
+    <ClInclude Include="include\MinHook\buffer.h" />
+    <ClInclude Include="include\MinHook\hde32.h" />
+    <ClInclude Include="include\MinHook\MinHook.h" />
+    <ClInclude Include="include\MinHook\pstdint.h" />
+    <ClInclude Include="include\MinHook\table32.h" />
+    <ClInclude Include="include\MinHook\trampoline.h" />
     <ClInclude Include="InputHooks.h" />
+    <ClInclude Include="SDL3\SDL.h" />
+    <ClInclude Include="SDL3\SDL_stdinc.h" />
     <ClInclude Include="TypeDefs.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WindowHooks.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="include\buffer.c" />
-    <ClCompile Include="include\hde32.c" />
-    <ClCompile Include="include\hook.c" />
-    <ClCompile Include="include\trampoline.c" />
+    <ClCompile Include="include\MinHook\buffer.c" />
+    <ClCompile Include="include\MinHook\hde32.c" />
+    <ClCompile Include="include\MinHook\hook.c" />
+    <ClCompile Include="include\MinHook\trampoline.c" />
     <ClCompile Include="InputHooks.cpp" />
     <ClCompile Include="Utils.cpp" />
     <ClCompile Include="WindowHooks.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="proxy.def" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

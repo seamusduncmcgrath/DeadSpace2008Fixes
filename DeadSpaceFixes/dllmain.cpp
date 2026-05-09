@@ -11,7 +11,8 @@
 #include <vector>
 #include <cstdint>
 
-#include "MinHook.h"
+#include "include\MinHook\MinHook.h"
+#include "SDL3/SDL.h"
 #include "TypeDefs.h"
 #include "WindowHooks.h"
 #include "Utils.h"
@@ -27,8 +28,112 @@ Netbios_t OriginalNetbios = nullptr;
 EndScene_t oEndScene = nullptr;
 SaveStringCopy_t oSaveStringCopy = nullptr;
 uintptr_t subtitleHookReturn = 0;
+XInputGetState_t oXInputGetState = nullptr;
+XInputSetState_t oXInputSetState = nullptr;
+XInputGetCapabilities_t oXInputGetCapabilities = nullptr;
+ShouldUseDirectInput_t oShouldUseDirectInput = nullptr; //wish these weren't such a pain so this could be in inputhooks.cpp
 
 float subtitleScale = 1.0f; //feel like 0.8 is a better baseline, subtitles clip out less then
+SDL_Gamepad* g_CurrentGamepad = nullptr;
+
+
+//proxy dll
+extern "C" DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
+{
+    if (dwUserIndex == 0 && g_CurrentGamepad != nullptr && SDL_GamepadConnected(g_CurrentGamepad))
+    {
+        memset(pState, 0, sizeof(XINPUT_STATE)); //clear the games struct so we start fresh
+
+        static DWORD s_PacketNumber = 0;
+        pState->dwPacketNumber = s_PacketNumber++;
+
+        //map the buttons
+        WORD buttons = 0;
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_SOUTH)) buttons |= XINPUT_GAMEPAD_A; //cross/b
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_EAST))  buttons |= XINPUT_GAMEPAD_B; //circle/a
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_WEST))  buttons |= XINPUT_GAMEPAD_X; //square/y
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_NORTH)) buttons |= XINPUT_GAMEPAD_Y; //triangle/x
+
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_UP))    buttons |= XINPUT_GAMEPAD_DPAD_UP;
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN))  buttons |= XINPUT_GAMEPAD_DPAD_DOWN;
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT))  buttons |= XINPUT_GAMEPAD_DPAD_LEFT;
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) buttons |= XINPUT_GAMEPAD_DPAD_RIGHT;
+
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER))  buttons |= XINPUT_GAMEPAD_LEFT_SHOULDER; //L1
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER)) buttons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; //R1
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_START)) buttons |= XINPUT_GAMEPAD_START; //options/plus
+
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK))  buttons |= XINPUT_GAMEPAD_LEFT_THUMB;  // L3 / left stick click, nearlly forgot about these
+        if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK)) buttons |= XINPUT_GAMEPAD_RIGHT_THUMB; // R3 / right stick click
+
+        pState->Gamepad.wButtons = buttons;
+
+        //map the triggers
+        int16_t leftTriggerSDL = SDL_GetGamepadAxis(g_CurrentGamepad, SDL_GAMEPAD_AXIS_LEFT_TRIGGER);
+        int16_t rightTriggerSDL = SDL_GetGamepadAxis(g_CurrentGamepad, SDL_GAMEPAD_AXIS_RIGHT_TRIGGER);
+
+        pState->Gamepad.bLeftTrigger = (BYTE)((leftTriggerSDL / 32767.0f) * 255.0f);
+        pState->Gamepad.bRightTrigger = (BYTE)((rightTriggerSDL / 32767.0f) * 255.0f);
+
+        //map the joysticks
+        pState->Gamepad.sThumbLX = SDL_GetGamepadAxis(g_CurrentGamepad, SDL_GAMEPAD_AXIS_LEFTX);
+        pState->Gamepad.sThumbRX = SDL_GetGamepadAxis(g_CurrentGamepad, SDL_GAMEPAD_AXIS_RIGHTX);
+
+        int16_t sdlLeftY = SDL_GetGamepadAxis(g_CurrentGamepad, SDL_GAMEPAD_AXIS_LEFTY); //we need to fetch the raw y values or there cooked
+        int16_t sdlRightY = SDL_GetGamepadAxis(g_CurrentGamepad, SDL_GAMEPAD_AXIS_RIGHTY);
+
+        pState->Gamepad.sThumbLY = (sdlLeftY == -32768) ? 32767 : -sdlLeftY; //then  we safely invert the y values here
+        pState->Gamepad.sThumbRY = (sdlRightY == -32768) ? 32767 : -sdlRightY;
+
+        return ERROR_SUCCESS;
+    }
+    if (oXInputGetState) return oXInputGetState(dwUserIndex, pState);
+    return ERROR_DEVICE_NOT_CONNECTED;
+}
+
+
+extern "C" DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration)
+{
+    if (dwUserIndex == 0 && g_CurrentGamepad != nullptr && SDL_GamepadConnected(g_CurrentGamepad))
+    {
+        Uint16 lowFreq = pVibration->wLeftMotorSpeed; //heavy rumble 
+        Uint16 highFreq = pVibration->wRightMotorSpeed; //light rumble
+
+        SDL_RumbleGamepad(g_CurrentGamepad, lowFreq, highFreq, 5000); //send the rumble to the controller for 5 seconds, the game should stop it early
+
+        return ERROR_SUCCESS;
+    }
+    if (oXInputSetState) return oXInputSetState(dwUserIndex, pVibration);
+    return ERROR_DEVICE_NOT_CONNECTED;
+}
+
+
+extern "C" DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities) //maybe rewrite soon? Don't think this is great
+{
+    if (dwUserIndex == 0 && g_CurrentGamepad != nullptr && SDL_GamepadConnected(g_CurrentGamepad))
+    {
+        memset(pCapabilities, 0, sizeof(XINPUT_CAPABILITIES));
+
+        pCapabilities->Type = XINPUT_DEVTYPE_GAMEPAD;
+        pCapabilities->SubType = XINPUT_DEVSUBTYPE_GAMEPAD;
+        pCapabilities->Flags = 0;
+
+        pCapabilities->Gamepad.wButtons = 0xFFFF;
+        pCapabilities->Gamepad.bLeftTrigger = 255;
+        pCapabilities->Gamepad.bRightTrigger = 255;
+        pCapabilities->Gamepad.sThumbLX = 32767;
+        pCapabilities->Gamepad.sThumbLY = 32767;
+        pCapabilities->Gamepad.sThumbRX = 32767;
+        pCapabilities->Gamepad.sThumbRY = 32767;
+
+        pCapabilities->Vibration.wLeftMotorSpeed = 65535;
+        pCapabilities->Vibration.wRightMotorSpeed = 65535;
+
+        return ERROR_SUCCESS;
+    }
+    if (oXInputGetCapabilities) return oXInputGetCapabilities(dwUserIndex, dwFlags, pCapabilities);
+    return ERROR_DEVICE_NOT_CONNECTED;
+}
 
 
 //this forces anisitropic filtering to 16x on all surfaces
@@ -53,6 +158,7 @@ int WINAPI hkWSAStartup(WORD wVersionRequested, LPWSADATA lpWSAData)
     return 10091;
 }
 
+
 UCHAR WINAPI hkNetbios(PNCB pncb)
 {
     //we return NRC_SYSTEM (0x40) here so it can't scan network devices
@@ -74,6 +180,14 @@ errno_t hkSaveStringCopy(wchar_t* dest, wchar_t* src) //just making the save fil
     //theres a bug with the game where it clears 128 bytes rather than 128 wide characters (256 bytes), this should fix it
     memset(dest, 0, 128 * sizeof(wchar_t));
     return -1;
+}
+
+
+//this function is some straight ass viceral cooked up, it checks if stuff is DInput or XInput,
+//but since DInput is dead due to prev hooks, we can just lobotomise it
+bool hkShouldUseDirectInput()
+{
+    return false; //wtf? shouldn't this be true. weird but now this slow ass function is dead
 }
 
     
@@ -123,8 +237,62 @@ void InitialiseHooks()
 }
 
 
+DWORD WINAPI SDLDeviceThread(LPVOID lpParam)
+{
+    if (SDL_Init(SDL_INIT_GAMEPAD) < 0)
+    {
+        DEBUG_LOG("SDL failed to init!");
+        return 1;
+    }
+
+    SDL_Event event;
+
+    while (true) //this is ass, it's really messy
+    {   
+        //SDL_WaitEventTimeout pumps the event queue without burning your CPU, it checks for events every 10 milliseconds
+        while (SDL_WaitEventTimeout(&event, 10))
+        {
+            if (event.type == SDL_EVENT_GAMEPAD_ADDED) //controller plugged in
+            {
+                if (g_CurrentGamepad == nullptr)
+                {
+                    g_CurrentGamepad = SDL_OpenGamepad(event.gdevice.which); //we open the controller plugged in here
+                    SDL_SetGamepadLED(g_CurrentGamepad, 0, 255, 255); //idk i just like the leds kinda like issacs health bar
+                }
+            }
+            else if (event.type == SDL_EVENT_GAMEPAD_REMOVED) //controller removed
+            {
+                SDL_Gamepad* disconnectedPad = SDL_GetGamepadFromID(event.gdevice.which);
+                if (disconnectedPad == g_CurrentGamepad)
+                {
+                    //clean up memory
+                    SDL_CloseGamepad(g_CurrentGamepad);
+                    g_CurrentGamepad = nullptr;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
 DWORD WINAPI MainThread(LPVOID)
 {
+    //proxy DLL stuff
+    char syspath[MAX_PATH];
+    GetSystemDirectoryA(syspath, MAX_PATH);
+    strcat_s(syspath, "\\xinput1_3.dll");
+
+    HMODULE hRealXInput = LoadLibraryA(syspath);
+    if (hRealXInput)
+    {
+        oXInputGetState = (XInputGetState_t)GetProcAddress(hRealXInput, "XInputGetState");
+        oXInputSetState = (XInputSetState_t)GetProcAddress(hRealXInput, "XInputSetState");
+        oXInputGetCapabilities = (XInputGetCapabilities_t)GetProcAddress(hRealXInput, "XInputGetCapabilities");
+    }
+
+    CreateThread(nullptr, 0, SDLDeviceThread, nullptr, 0, nullptr);
+
     #ifdef _DEBUG
     InitialiseConsole();
     #endif
@@ -225,6 +393,20 @@ DWORD WINAPI MainThread(LPVOID)
         }
     }
 
+    const char* useDirectInputSignature = "81 EC 84 00 00 00 53 56 57 33 DB 6A 4C 8D 44 24 48 53 50 89 5C 24 20 89 5C 24 1C 89 5C 24 4C E8 ? ? ? ?";
+    uintptr_t useDirectInputAddress = FindPattern(hExe, useDirectInputSignature);
+
+    if (useDirectInputAddress != 0)
+    {
+        void* pUseDirectInputTarget = reinterpret_cast<void*>(useDirectInputAddress);
+
+        if (MH_CreateHook(pUseDirectInputTarget, &hkShouldUseDirectInput, reinterpret_cast<LPVOID*>(&oShouldUseDirectInput)) == MH_OK)
+        {
+            MH_EnableHook(pUseDirectInputTarget);
+            DEBUG_LOG("Removed terrible controller API checker");
+        }
+    }
+
     //wait for the window
     HWND hwnd = nullptr;
 
@@ -266,9 +448,9 @@ DWORD WINAPI MainThread(LPVOID)
     return 0;
 }
 
-BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID)
+BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) 
 {
-    if (reason == DLL_PROCESS_ATTACH)
+    if (ul_reason_for_call == DLL_PROCESS_ATTACH)
     {
         DisableThreadLibraryCalls(hModule);
 
@@ -282,7 +464,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD reason, LPVOID)
             SetProcessAffinityMask(GetCurrentProcess(), affinityMask);
         }
 
-        CreateThread(nullptr, 0, MainThread, nullptr, 0, nullptr);
+        CreateThread(nullptr, 0, MainThread, hModule, 0, nullptr);
     }
     return TRUE;
 }

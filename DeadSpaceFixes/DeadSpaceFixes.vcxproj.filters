@@ -19,6 +19,9 @@
     <Filter Include="Source Files\MinHook">
       <UniqueIdentifier>{eba1e473-de9a-4855-af45-87e1fbd884a4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\SDL3">
+      <UniqueIdentifier>{f4774618-4d5a-4e46-9751-b615d7295bf5}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="framework.h">
@@ -26,21 +29,6 @@
     </ClInclude>
     <ClInclude Include="TypeDefs.h">
       <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\MinHook.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="include\buffer.h">
-      <Filter>Header Files\MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="include\hde32.h">
-      <Filter>Header Files\MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="include\table32.h">
-      <Filter>Header Files\MinHook</Filter>
-    </ClInclude>
-    <ClInclude Include="include\trampoline.h">
-      <Filter>Header Files\MinHook</Filter>
     </ClInclude>
     <ClInclude Include="WindowHooks.h">
       <Filter>Header Files</Filter>
@@ -51,22 +39,34 @@
     <ClInclude Include="InputHooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\MinHook\buffer.h">
+      <Filter>Header Files\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MinHook\hde32.h">
+      <Filter>Header Files\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MinHook\MinHook.h">
+      <Filter>Header Files\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MinHook\pstdint.h">
+      <Filter>Header Files\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MinHook\table32.h">
+      <Filter>Header Files\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="include\MinHook\trampoline.h">
+      <Filter>Header Files\MinHook</Filter>
+    </ClInclude>
+    <ClInclude Include="SDL3\SDL.h">
+      <Filter>Header Files\SDL3</Filter>
+    </ClInclude>
+    <ClInclude Include="SDL3\SDL_stdinc.h">
+      <Filter>Header Files\SDL3</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="include\hde32.c">
-      <Filter>Source Files\MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="include\hook.c">
-      <Filter>Source Files\MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="include\trampoline.c">
-      <Filter>Source Files\MinHook</Filter>
-    </ClCompile>
-    <ClCompile Include="include\buffer.c">
-      <Filter>Source Files\MinHook</Filter>
     </ClCompile>
     <ClCompile Include="WindowHooks.cpp">
       <Filter>Source Files</Filter>
@@ -77,5 +77,22 @@
     <ClCompile Include="InputHooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="include\MinHook\buffer.c">
+      <Filter>Source Files\MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="include\MinHook\hde32.c">
+      <Filter>Source Files\MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="include\MinHook\hook.c">
+      <Filter>Source Files\MinHook</Filter>
+    </ClCompile>
+    <ClCompile Include="include\MinHook\trampoline.c">
+      <Filter>Source Files\MinHook</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="proxy.def">
+      <Filter>Source Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

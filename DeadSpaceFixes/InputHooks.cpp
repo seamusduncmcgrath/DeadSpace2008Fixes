@@ -1,13 +1,12 @@
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
-#include "minhook.h"
-#include "InputHooks.h"
-#include "TypeDefs.h"
 
+#include <Windows.h>
+
+#include "include\MinHook\MinHook.h"
+#include "InputHooks.h"
 
 DirectInput8Create_t oDirectInput8Create = nullptr;
 EnumDevices_t oEnumDevices = nullptr;
-
 
 HRESULT __stdcall hkEnumDevices(IDirectInput8* pDI, DWORD dwDevType, LPDIENUMDEVICESCALLBACKA lpCallback, LPVOID pvRef, DWORD dwFlags)
 {
