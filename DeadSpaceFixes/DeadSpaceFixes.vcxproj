@@ -79,7 +79,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\include;C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -88,7 +88,7 @@
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
       <AdditionalDependencies>SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -102,7 +102,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\include;C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -111,7 +111,7 @@
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
       <AdditionalDependencies>SDL3.lib;d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -123,7 +123,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\include;C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,7 +146,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include;C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\include;C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\include\MinHook;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,6 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Config.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="include\MinHook\buffer.h" />
     <ClInclude Include="include\MinHook\hde32.h" />
@@ -166,14 +167,14 @@
     <ClInclude Include="include\MinHook\pstdint.h" />
     <ClInclude Include="include\MinHook\table32.h" />
     <ClInclude Include="include\MinHook\trampoline.h" />
+    <ClInclude Include="include\SDL3\SDL.h" />
     <ClInclude Include="InputHooks.h" />
-    <ClInclude Include="SDL3\SDL.h" />
-    <ClInclude Include="SDL3\SDL_stdinc.h" />
     <ClInclude Include="TypeDefs.h" />
     <ClInclude Include="Utils.h" />
     <ClInclude Include="WindowHooks.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="include\MinHook\buffer.c" />
     <ClCompile Include="include\MinHook\hde32.c" />

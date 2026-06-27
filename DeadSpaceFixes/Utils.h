@@ -7,6 +7,8 @@
 #define DEBUG_LOG(fmt, ...) 
 #endif
 
-void InitialiseConsole();
+namespace Utils {
+	void InitialiseConsole();
 
-uintptr_t FindPattern(HMODULE hModule, const char* signature);
+	uintptr_t FindPattern(HMODULE hModule, const char* signature);
+}

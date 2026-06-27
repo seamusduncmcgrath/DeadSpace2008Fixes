@@ -17,6 +17,7 @@
 #include "WindowHooks.h"
 #include "Utils.h"
 #include "InputHooks.h"
+#include "Config.h"
 
 
 //Globals
@@ -34,7 +35,11 @@ XInputGetCapabilities_t oXInputGetCapabilities = nullptr;
 ShouldUseDirectInput_t oShouldUseDirectInput = nullptr; //wish these weren't such a pain so this could be in inputhooks.cpp
 
 float subtitleScale = 1.0f; //feel like 0.8 is a better baseline, subtitles clip out less then
+int g_TargetFPS = 60;
 SDL_Gamepad* g_CurrentGamepad = nullptr;
+
+LARGE_INTEGER g_TimerFrequency;
+LARGE_INTEGER g_LastFrameTime;
 
 
 //proxy dll
@@ -216,7 +221,7 @@ __declspec(naked) void hkSubtitleScale() //note to self comment well
 }
 
 
-void InitialiseHooks()
+void InitialiseNetworkHooks()
 {
     HMODULE hWinSock = GetModuleHandleA("ws2_32.dll");
     FARPROC pWSAStartup = GetProcAddress(hWinSock, "WSAStartup");
@@ -234,6 +239,43 @@ void InitialiseHooks()
         MH_EnableHook(pNetbios);
         DEBUG_LOG("Netbios also hooked, weird NAT harvester is now blocked");
     }
+}
+
+HRESULT APIENTRY hkEndScene(LPDIRECT3DDEVICE9 pDevice)
+{
+    if (g_TargetFPS > 0)
+    {
+        LARGE_INTEGER currentTime;
+        LONGLONG targetTicksPerFrame = g_TimerFrequency.QuadPart / g_TargetFPS;
+
+        while (true)
+        {
+            QueryPerformanceCounter(&currentTime);
+
+            LONGLONG elapsed = currentTime.QuadPart - g_LastFrameTime.QuadPart;
+            if (elapsed >= targetTicksPerFrame)
+                break;
+
+            //if were still far away sleep a bit
+            if (targetTicksPerFrame - elapsed > g_TimerFrequency.QuadPart / 1000) //>1ms
+            {
+                Sleep(1);
+            }
+
+            else
+            {
+                YieldProcessor(); //proper fine grain wait, never knew about this till today lol
+            }
+        }
+
+        g_LastFrameTime.QuadPart += targetTicksPerFrame;
+
+        if (currentTime.QuadPart - g_LastFrameTime.QuadPart > targetTicksPerFrame)
+        {
+            g_LastFrameTime = currentTime;
+        }
+    }
+    return oEndScene(pDevice);
 }
 
 
@@ -294,17 +336,25 @@ DWORD WINAPI MainThread(LPVOID)
     CreateThread(nullptr, 0, SDLDeviceThread, nullptr, 0, nullptr);
 
     #ifdef _DEBUG
-    InitialiseConsole();
+    Utils::InitialiseConsole();
     #endif
 
-    InitialiseInputHooks();
-    InitialiseWindowHooks();
-    InitialiseHooks();
+    if (Config::PatchOutDInput8) {
+        Input::InitialiseInputHooks();
+    }
+
+    if (Config::BorderlessWindowed) {
+        Window::InitialiseWindowHooks();
+    }
+
+    if (Config::RemoveTelemetry) {
+        InitialiseNetworkHooks();
+    }
 
     HMODULE hExe = GetModuleHandleA(nullptr);
 
     const char* timerSignature = "80 3D ? ? ? ? 00 74 15 8D 54 24 0C 52";
-    uintptr_t patternAddress = FindPattern(hExe, timerSignature);
+    uintptr_t patternAddress = Utils::FindPattern(hExe, timerSignature);
 
     //high precision timer fix, can fix some of the issues with high framerates. Should still cap to 120-180 max, as 200-300 the issues come back
     //crazy because the reason why this even works is they had a flag toggled to 0 that makes the game use GetTickCount(), but if you set it to 1 it uses QueryPerformanceCounter()
@@ -327,41 +377,63 @@ DWORD WINAPI MainThread(LPVOID)
         }
     }
 
-    const char* subtitleSignature = "83 7E 1C 00 F3 0F 10 46 44 F3 0F 59 45 18 53 8B 5D 1C";
-    uintptr_t subtitleAddress = FindPattern(hExe, subtitleSignature);
+    if (Config::FixVSync) {
+        const char* vsyncMenuSig = "BA 02 00 00 00 EB ? 33 D2 89 15";
+        uintptr_t vsyncmenuAddress = Utils::FindPattern(hExe, vsyncMenuSig);
 
-    if (subtitleAddress != 0)
-    {
-        void* patchAddress = reinterpret_cast<void*>(subtitleAddress + 9);
-        DEBUG_LOG("Found subtitle scale hook at 0x%p", patchAddress);
-
-        //calculate the correct scale
-        //DS1 was only designed for up to 720p, so subtitles don't scale above it, so we just (try to) correctly scale it here
-        int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-        //subtitleScale = screenHeight / 1080.0f; //720 would be better but I'm to lazy to figure it out
-
-        DEBUG_LOG("Subtitle scale is now %f", subtitleScale);
-
-        subtitleHookReturn = reinterpret_cast<uintptr_t>(patchAddress) + 5;
-
-        DWORD oldProtect;
-        if (VirtualProtect(patchAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect))
+        if (vsyncmenuAddress != 0)
         {
-            BYTE* pByte = reinterpret_cast<BYTE*>(patchAddress);
+            void* patchAddress = reinterpret_cast<void*>(vsyncmenuAddress + 1);
+            DEBUG_LOG("Found vsync menu address at 0x%p", patchAddress);
 
-            //write the E9 JMP
-            pByte[0] = 0xE9;
+            DWORD oldProtect;
+            if (VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &oldProtect))
+            {
+                *static_cast<BYTE*>(patchAddress) = 0x00;
+                VirtualProtect(patchAddress, 1, oldProtect, &oldProtect);
+                DEBUG_LOG("Patched menu vsync");
+            }
+        }
+    }
 
-            *reinterpret_cast<uintptr_t*>(pByte + 1) = reinterpret_cast<uintptr_t>(&hkSubtitleScale) - reinterpret_cast<uintptr_t>(patchAddress) - 5;
+    if (Config::FixSubtitleScale)
+    {
+        const char* subtitleSignature = "83 7E 1C 00 F3 0F 10 46 44 F3 0F 59 45 18 53 8B 5D 1C";
+        uintptr_t subtitleAddress = Utils::FindPattern(hExe, subtitleSignature);
 
-            VirtualProtect(patchAddress, 5, oldProtect, &oldProtect);
-            DEBUG_LOG("Subtitles scaled");
+        if (subtitleAddress != 0)
+        {
+            void* patchAddress = reinterpret_cast<void*>(subtitleAddress + 9);
+            DEBUG_LOG("Found subtitle scale hook at 0x%p", patchAddress);
+
+            //calculate the correct scale
+            //DS1 was only designed for up to 720p, so subtitles don't scale above it, so we just (try to) correctly scale it here
+            int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+            //subtitleScale = screenHeight / 1080.0f; //720 would be better but I'm to lazy to figure it out
+
+            DEBUG_LOG("Subtitle scale is now %f", subtitleScale);
+
+            subtitleHookReturn = reinterpret_cast<uintptr_t>(patchAddress) + 5;
+
+            DWORD oldProtect;
+            if (VirtualProtect(patchAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect))
+            {
+                BYTE* pByte = reinterpret_cast<BYTE*>(patchAddress);
+
+                //write the E9 JMP
+                pByte[0] = 0xE9;
+
+                *reinterpret_cast<uintptr_t*>(pByte + 1) = reinterpret_cast<uintptr_t>(&hkSubtitleScale) - reinterpret_cast<uintptr_t>(patchAddress) - 5;
+
+                VirtualProtect(patchAddress, 5, oldProtect, &oldProtect);
+                DEBUG_LOG("Subtitles scaled");
+            }
         }
     }
 
     //I figured out I can set my own custom version string on the main menu so why not lol
     const char* versionSignature = "68 ? ? ? ? 6A 64 68 ? ? ? ? E8 ? ? ? ? 83 C4 1C";
-    uintptr_t versionAddress = FindPattern(hExe, versionSignature);
+    uintptr_t versionAddress = Utils::FindPattern(hExe, versionSignature);
     if (versionAddress != 0)
     {
         char* pVersionString = *reinterpret_cast<char**>(versionAddress + 8);
@@ -380,7 +452,7 @@ DWORD WINAPI MainThread(LPVOID)
     }
 
     const char* saveStringSignature = "8B 44 24 08 85 C0 74 14 50 8B 44 24 08 68 80 00"; //credit to marker patch for this
-    uintptr_t  saveStringAddress = FindPattern(hExe, saveStringSignature);
+    uintptr_t  saveStringAddress = Utils::FindPattern(hExe, saveStringSignature);
     if (saveStringAddress != 0)
     {
         void* pSaveCopyTarget = reinterpret_cast<void*>(saveStringAddress);
@@ -393,19 +465,24 @@ DWORD WINAPI MainThread(LPVOID)
         }
     }
 
-    const char* useDirectInputSignature = "81 EC 84 00 00 00 53 56 57 33 DB 6A 4C 8D 44 24 48 53 50 89 5C 24 20 89 5C 24 1C 89 5C 24 4C E8 ? ? ? ?";
-    uintptr_t useDirectInputAddress = FindPattern(hExe, useDirectInputSignature);
+    if (Config::PatchOutDInput8) {
+        const char* useDirectInputSignature = "81 EC 84 00 00 00 53 56 57 33 DB 6A 4C 8D 44 24 48 53 50 89 5C 24 20 89 5C 24 1C 89 5C 24 4C E8 ? ? ? ?";
+        uintptr_t useDirectInputAddress = Utils::FindPattern(hExe, useDirectInputSignature);
 
-    if (useDirectInputAddress != 0)
-    {
-        void* pUseDirectInputTarget = reinterpret_cast<void*>(useDirectInputAddress);
-
-        if (MH_CreateHook(pUseDirectInputTarget, &hkShouldUseDirectInput, reinterpret_cast<LPVOID*>(&oShouldUseDirectInput)) == MH_OK)
+        if (useDirectInputAddress != 0)
         {
-            MH_EnableHook(pUseDirectInputTarget);
-            DEBUG_LOG("Removed terrible controller API checker");
+            void* pUseDirectInputTarget = reinterpret_cast<void*>(useDirectInputAddress);
+
+            if (MH_CreateHook(pUseDirectInputTarget, &hkShouldUseDirectInput, reinterpret_cast<LPVOID*>(&oShouldUseDirectInput)) == MH_OK)
+            {
+                MH_EnableHook(pUseDirectInputTarget);
+                DEBUG_LOG("Removed terrible controller API checker");
+            }
         }
     }
+
+    QueryPerformanceFrequency(&g_TimerFrequency);
+    QueryPerformanceCounter(&g_LastFrameTime);
 
     //wait for the window
     HWND hwnd = nullptr;
@@ -439,6 +516,13 @@ DWORD WINAPI MainThread(LPVOID)
         MH_CreateHook(pSetSamplerStateTarget, &hkSetSamplerState, reinterpret_cast<LPVOID*>(&oSetSamplerState));
         MH_EnableHook(pSetSamplerStateTarget);
 
+        if (Config::SafeFPSCap)
+        {
+            void* pEndSceneTarget = pVTable[42];
+            MH_CreateHook(pEndSceneTarget, &hkEndScene, reinterpret_cast<LPVOID*>(&oEndScene));
+            MH_EnableHook(pEndSceneTarget);
+        }
+
         //cleanup
         pDummyDevice->Release();
     }
@@ -446,6 +530,29 @@ DWORD WINAPI MainThread(LPVOID)
     pD3D->Release();
 
     return 0;
+}
+
+void ApplyStartupVSyncPatch() //this has to run really early or it's broken
+{
+    HMODULE hExe = GetModuleHandleA(nullptr);
+    if (!hExe) return;
+
+    // The signature for MOV EBP, 2
+    const char* vsyncStartupSig = "64 A1 ? ? ? ? 8B 08 8B 49 0C BD 02 00 00 00 33 FF";
+    uintptr_t vsyncStartupAddress = Utils::FindPattern(hExe, vsyncStartupSig);
+
+    if (vsyncStartupAddress != 0)
+    {
+        // +12 bytes to hit the '02'
+        void* patchAddress = reinterpret_cast<void*>(vsyncStartupAddress + 12);
+
+        DWORD oldProtect;
+        if (VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &oldProtect))
+        {
+            *static_cast<BYTE*>(patchAddress) = 0x00; //0x00 uncaps it, 0x01 sets it to 60, 0x02 sets it to 30 (which is what the game normally uses
+            VirtualProtect(patchAddress, 1, oldProtect, &oldProtect);
+        }
+    }
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved) 
@@ -462,6 +569,11 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
         {
             DWORD_PTR affinityMask = 0xFF;
             SetProcessAffinityMask(GetCurrentProcess(), affinityMask);
+        }
+        Config::Load(); //really dislike doing it like this, could definitely cause issues.
+        if (Config::FixVSync)
+        {
+            ApplyStartupVSyncPatch();
         }
 
         CreateThread(nullptr, 0, MainThread, hModule, 0, nullptr);

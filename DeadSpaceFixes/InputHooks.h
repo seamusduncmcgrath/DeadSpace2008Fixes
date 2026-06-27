@@ -2,7 +2,9 @@
 #include <Windows.h>
 #include "TypeDefs.h"
 
-void InitialiseInputHooks();
+namespace Input {
+	void InitialiseInputHooks();
+}
 bool hkIsGamePad();
 
 extern "C" DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState);

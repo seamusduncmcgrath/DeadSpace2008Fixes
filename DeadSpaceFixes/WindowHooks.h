@@ -1,7 +1,9 @@
 #pragma once
 #include <windows.h>
 
-void InitialiseWindowHooks();
+namespace Window {
+	void InitialiseWindowHooks();
+}
 
 HWND WINAPI hkCreateWindowExA(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 
