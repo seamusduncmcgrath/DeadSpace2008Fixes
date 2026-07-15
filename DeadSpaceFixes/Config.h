@@ -7,5 +7,6 @@ namespace Config {
     extern bool FixVSync;
     extern bool SafeFPSCap;
     extern bool FixSubtitleScale;
+    extern bool SkipLandingCutscene;
     void Load();
 }

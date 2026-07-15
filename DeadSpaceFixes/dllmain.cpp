@@ -451,6 +451,30 @@ DWORD WINAPI MainThread(LPVOID)
         }
     }
 
+    if (Config::SkipLandingCutscene) {
+        const char* introSkipSig = "83 EC 30 8B 88 88 08 00 00 53 56 57 89 0D ? ? ? ? 68 ? ? ? ? 8D 4C 24 24";
+        uintptr_t introSkipAddress = Utils::FindPattern(hExe, introSkipSig);
+        if (introSkipAddress != 0)
+        {
+            char* pIntroSkipString = *reinterpret_cast<char**>(introSkipAddress + 0x13);
+            DEBUG_LOG("Found string at 0x%p", pIntroSkipString);
+            DEBUG_LOG("Intro string is %s", pIntroSkipString);
+
+            const char* stringToSkipIntro("XCENTKOWSK_C78C369_F71988A_v3");
+
+            DWORD oldProtect;
+            if (VirtualProtect(pIntroSkipString, 29, PAGE_EXECUTE_READWRITE, &oldProtect))
+            {
+                memcpy(pIntroSkipString, stringToSkipIntro, 29);
+                VirtualProtect(pIntroSkipString, 29, oldProtect, &oldProtect);
+                DEBUG_LOG("Skipped intro!");
+            }
+            else {
+                DEBUG_LOG("Failed to skip intro!");
+            }
+        }
+    }
+
     const char* saveStringSignature = "8B 44 24 08 85 C0 74 14 50 8B 44 24 08 68 80 00"; //credit to marker patch for this
     uintptr_t  saveStringAddress = Utils::FindPattern(hExe, saveStringSignature);
     if (saveStringAddress != 0)

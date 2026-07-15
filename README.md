@@ -15,6 +15,7 @@ A mod for Dead Space (2008) that adds numerous fixes and improvements
 * **Native PS4/5 & Switch Controller Support:** The game now supports PS4/5 and Nintendo switch controllers using SDL3.
 * **Fixed VSync:** The 30 FPS cap on the VSync has been removed, though the game uses half rate VSync so it will be capped to half your display refresh rate.
 * **(Optional) 60 FPS Cap:** Simply change `SafeFPSCap=0` to `SafeFPSCap=1` in the `DeadSpaceFixes.ini`
+* **(Optional) Skip Ishimura Landing Cutscene:** Skips the Ishimura landing cutscene to help with speedrunning the game.
 
 
 ## Installation
@@ -42,6 +43,8 @@ RemoveTelemetry=1
 SafeFPSCap=1
 ;Fixes subtitles being to small at high resolutions
 FixSubtitleScale=1
+SkipIshimuraLandingCutscene=0
+;Skips the Ishimura landing cutscene to help with speedrunning
 ```
 
 ## Comparison Of Texture Filtering On Vs Off
@@ -55,3 +58,8 @@ FixSubtitleScale=1
 <img width="3819" height="2064" alt="image" src="https://github.com/user-attachments/assets/e4ec2daf-c264-44d1-b503-018d64f2fa5e" />
 **Fix Off:**
 <img width="3839" height="2159" alt="image" src="https://github.com/user-attachments/assets/d8ec2329-fc4a-47fb-b65c-d4b6dc9291bc" />
+
+##Credits
+- [SDL3](https://github.com/libsdl-org/SDL) for the PS4/PS5 and switch controller support.
+- [MinHook](https://github.com/tsudakageyu/minhook) for hooking.
+- [SuiMachine](https://github.com/SuiMachine/Dead-Space---Intro-Skip) for the original intro skip mod.
