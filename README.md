@@ -5,11 +5,11 @@ A mod for Dead Space (2008) that adds numerous fixes and improvements
 ## Features
 
 * **Borderless Windowed:** Adds a simple borderless windowed mode that fixes gamma issues and alt-tabbing bugs. To use, simply disable fullscreen in the game settings
-* **(Experimental) Fixed Crashes On 10+ Core CPUs:** The crashes on modern 10+ core CPUs should be fixed. (I do not own a 10+ core CPU to 100% confirm, but the array overflow has been patched).
+* **(Experimental) Fixed Crashes on 10+ Core CPUs:** The crashes on modern 10+ core CPUs should be fixed. (I do not own a 10+ core CPU to 100% confirm, but the array overflow has been patched).
 * **Reduced Issues At High FPS:** A large amount of the physics/ragdoll issues at 60+ FPS are caused by the game relying on GetTickCount, which is really inaccurate. I found an unused developer flag in the engine that allows you to swap GetTickCount for QueryPerformanceCounter, which is much more precise. Visceral likely disabled this because older AMD CPUs had desync issues, but on modern hardware, it works perfectly. *Note:* I still recommend capping the FPS to around 120-180. I was able to complete QTEs and had no issues with ragdolls at a 180 FPS cap, but if it goes above ~200 FPS, the issues start to come back.
-* **Significantly Faster Startup Times:** Removed the insanely slow check for legacy DirectInput8 devices, this takes about 3 seconds off the boot time! (depends on how many HID devices are connected) This does mean the game won't pick up steering wheels or pre-2007 joysticks, but any modern Xbox/PlayStation controllers running through XInput will still work perfectly.
-* **Anisitropic Filtering:** Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero performance loss on modern hardware and hugely improves texture clarity.
-* **High Resolution Subtitle Fix:** Fixes the too small subtitles at resolutions above 720p, no need to squint to see subtitles at 4k anymore!
+* **Significantly Faster Startup Times:** Removed the insanely slow check for legacy DirectInput8 devices; this saves about 3 seconds off the boot time! (depends on how many HID devices are connected) This does mean the game won't pick up steering wheels or pre-2007 joysticks, but any modern Xbox/PlayStation controllers running through XInput will still work perfectly.
+* **Anisotropic Filtering:** Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero performance loss on modern hardware and hugely improves texture clarity.
+* **High Resolution Subtitle Fix:** Fixes the too small subtitles at resolutions above 720p; no need to squint to see subtitles at 4k anymore!
 * **Safer Save String Handling:** Improved the save string handling; Viceral had left an issue where it would clear 128 bytes rather than 128 wide characters (256 bytes), which would cause garbage data and could cause issues and crashes.
 * **Removed Telemetry:** Removed some random telemetry that would tell EA what OS you are on and get your device MAC address. This will make the game fully offline and reduce startup times a bit.
 * **Native PS4/5 & Switch Controller Support:** The game now supports PS4/5 and Nintendo switch controllers using SDL3.
@@ -31,7 +31,7 @@ Some settings can be enabled or disabled using `DeadSpaceFixes.ini`. Create this
 
 ```ini
 [Settings]
-;Chnages the games windowed mode to borderless windowed
+;Changes the games windowed mode to borderless windowed
 BorderlessWindowed=1
 ;Removes the 30 FPS cap when VSync is enabled.
 FixVSync=1
@@ -43,8 +43,8 @@ RemoveTelemetry=1
 SafeFPSCap=1
 ;Fixes subtitles being to small at high resolutions
 FixSubtitleScale=1
-SkipIshimuraLandingCutscene=0
 ;Skips the Ishimura landing cutscene to help with speedrunning
+SkipIshimuraLandingCutscene=0
 ```
 
 ## Comparison Of Texture Filtering On Vs Off
@@ -59,7 +59,7 @@ SkipIshimuraLandingCutscene=0
 **Fix Off:**
 <img width="3839" height="2159" alt="image" src="https://github.com/user-attachments/assets/d8ec2329-fc4a-47fb-b65c-d4b6dc9291bc" />
 
-##Credits
+## Credits
 - [SDL3](https://github.com/libsdl-org/SDL) for the PS4/PS5 and switch controller support.
 - [MinHook](https://github.com/tsudakageyu/minhook) for hooking.
 - [SuiMachine](https://github.com/SuiMachine/Dead-Space---Intro-Skip) for the original intro skip mod.
