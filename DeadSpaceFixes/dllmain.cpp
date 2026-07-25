@@ -11,7 +11,7 @@
 #include <vector>
 #include <cstdint>
 
-#include "include\MinHook\MinHook.h"
+#include "MinHook\MinHook.h"
 #include "SDL3/SDL.h"
 #include "TypeDefs.h"
 #include "WindowHooks.h"
