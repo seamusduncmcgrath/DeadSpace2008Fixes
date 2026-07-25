@@ -88,7 +88,7 @@
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
       <AdditionalDependencies>SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -111,7 +111,7 @@
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
       <AdditionalDependencies>SDL3.lib;d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>C:\Users\Seamus\Documents\GitHub\DeadSpace2008Fixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -132,7 +132,7 @@
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
       <AdditionalDependencies>SDL3.lib;$(CoreLibraryDependencies);%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -155,7 +155,7 @@
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
       <AdditionalDependencies>SDL3.lib;d3d9.lib;%(AdditionalDependencies);d3d9.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>C:\DevTools\DeadSpaceFixes\DeadSpaceFixes\lib\SDL3\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
