@@ -11,6 +11,7 @@ namespace Config {
 	bool FixVSync = true;
 	bool FixSubtitleScale = true;
 	bool SkipLandingCutscene = false;
+	bool SkipIntroToMainMenu = false;
 	void Load() {
 		std::filesystem::path configPath = std::filesystem::current_path() / "DeadSpaceFixes.ini";
 
@@ -23,5 +24,6 @@ namespace Config {
 		FixSubtitleScale = GetPrivateProfileIntA("Settings", "FixSubtitleScale", 1, configPathStr.c_str()) != 0;
 		SafeFPSCap = GetPrivateProfileIntA("Settings", "SafeFPSCap", 0, configPathStr.c_str()) != 0;
 		SkipLandingCutscene = GetPrivateProfileIntA("Settings", "SkipIshimuraLandingCutscene", 0, configPathStr.c_str()) != 0;
+		SkipIntroToMainMenu = GetPrivateProfileIntA("Settings", "SkipIntroToMainMenu", 0, configPathStr.c_str()) != 0;
 	}
 }
