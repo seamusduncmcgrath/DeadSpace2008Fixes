@@ -8,5 +8,6 @@ namespace Config {
     extern bool SafeFPSCap;
     extern bool FixSubtitleScale;
     extern bool SkipLandingCutscene;
+    extern bool SkipIntroToMainMenu;
     void Load();
 }

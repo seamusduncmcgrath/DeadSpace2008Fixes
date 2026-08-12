@@ -16,6 +16,7 @@ A mod for Dead Space (2008) that adds numerous fixes and improvements
 * **Fixed VSync:** The 30 FPS cap on the VSync has been removed, though the game uses half rate VSync so it will be capped to half your display refresh rate.
 * **(Optional) 60 FPS Cap:** Simply change `SafeFPSCap=0` to `SafeFPSCap=1` in the `DeadSpaceFixes.ini`
 * **(Optional) Skip Ishimura Landing Cutscene:** Skips the Ishimura landing cutscene to help with speedrunning the game.
+* **(Optional) Skip Intro To Main Menu:** Skips the boot intro and lands directly on the main menu, with the Continue button and menu background fully intact. Set `SkipIntroToMainMenu=1` in the config file.
 
 
 ## Installation
@@ -45,6 +46,8 @@ SafeFPSCap=1
 FixSubtitleScale=1
 ;Skips the Ishimura landing cutscene to help with speedrunning
 SkipIshimuraLandingCutscene=0
+;Skips the boot intro and lands directly on the main menu
+SkipIntroToMainMenu=0
 ```
 
 ## Comparison Of Texture Filtering On Vs Off
