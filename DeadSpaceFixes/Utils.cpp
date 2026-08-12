@@ -51,7 +51,7 @@ namespace Utils {
 
         if (regionSize <= s) return 0;
 
-        for (auto i = 0ul; i < regionSize - s; ++i) {
+        for (std::size_t i = 0ul; i <= regionSize - s; ++i) {
             bool found = true;
             for (auto j = 0ul; j < s; ++j) {
                 if (region[i + j] != d[j] && d[j] != -1) {

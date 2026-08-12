@@ -281,7 +281,7 @@ HRESULT APIENTRY hkEndScene(LPDIRECT3DDEVICE9 pDevice)
 
 DWORD WINAPI SDLDeviceThread(LPVOID lpParam)
 {
-    if (SDL_Init(SDL_INIT_GAMEPAD) < 0)
+    if (!SDL_Init(SDL_INIT_GAMEPAD))
     {
         DEBUG_LOG("SDL failed to init!");
         return 1;
