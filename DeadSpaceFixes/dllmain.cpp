@@ -10,6 +10,9 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+#include <emmintrin.h>
+#include <tmmintrin.h>
+#include <intrin.h>
 
 //MinHook declares MH_STATUS as a C-style unscoped enum, which trips the
 //C++ Core Guidelines warning C26812 (Enum.3). It's a third-party header we
@@ -340,6 +343,8 @@ DWORD WINAPI SDLDeviceThread(LPVOID lpParam)
                 if (g_CurrentGamepad == nullptr)
                 {
                     g_CurrentGamepad = SDL_OpenGamepad(event.gdevice.which); //we open the controller plugged in here
+                    const char* name = SDL_GetGamepadName(g_CurrentGamepad);
+                    DEBUG_LOG("Controller connected: %s", name ? name : "Unknown");
                     SDL_SetGamepadLED(g_CurrentGamepad, 0, 255, 255); //idk i just like the leds kinda like issacs health bar
                 }
             }
@@ -376,9 +381,9 @@ DWORD WINAPI MainThread(LPVOID)
 
     CreateThread(nullptr, 0, SDLDeviceThread, nullptr, 0, nullptr);
 
-    #ifdef _DEBUG
+#ifdef _DEBUG
     Utils::InitialiseConsole();
-    #endif
+#endif
 
     if (Config::PatchOutDInput8) {
         Input::InitialiseInputHooks();
@@ -480,7 +485,7 @@ DWORD WINAPI MainThread(LPVOID)
         char* pVersionString = *reinterpret_cast<char**>(versionAddress + 8);
         DEBUG_LOG("Found version number at 0x%p", pVersionString);
         DEBUG_LOG("Game version is %s", pVersionString);
-        
+
         const char* customVersion = "DeadSpaceFixes Installed!";
 
         DWORD oldProtect;
@@ -508,7 +513,6 @@ DWORD WINAPI MainThread(LPVOID)
                 DEBUG_LOG("Failed to skip intro!");
         }
 
-        //AI:
         //NG+ variant: NG+ seeds the checkpoint record from object state instead
         //of resolving it by name, so the name rewrite above never runs. Hook the
         //record-creating function and rewrite the New Game checkpoint for the
@@ -521,7 +525,7 @@ DWORD WINAPI MainThread(LPVOID)
         if (ngPlusAddress != 0)
         {
             if (MH_CreateHook(reinterpret_cast<void*>(ngPlusAddress), &hkCreateCheckpointRecord,
-                              reinterpret_cast<LPVOID*>(&oCreateCheckpointRecord)) == MH_OK &&
+                reinterpret_cast<LPVOID*>(&oCreateCheckpointRecord)) == MH_OK &&
                 MH_EnableHook(reinterpret_cast<void*>(ngPlusAddress)) == MH_OK)
             {
                 DEBUG_LOG("NG+ landing cutscene skip hooked at 0x%X", ngPlusAddress);
@@ -532,7 +536,7 @@ DWORD WINAPI MainThread(LPVOID)
             }
         }
     }
-    //AI
+
     if (Config::SkipIntroToMainMenu) {
         //SkipIntroToMainMenu: skip the boot intro and jump straight to the main menu.
         //Reverse engineered and implemented by AI.
@@ -573,88 +577,91 @@ DWORD WINAPI MainThread(LPVOID)
                 patch[7] = 0x90;
                 if (Utils::WriteBytes(attractEntry, patch, sizeof(patch)))
                     DEBUG_LOG("Patched attract state to exit immediately");
+
             }
         }
-    }
 
-    const char* saveStringSignature = "8B 44 24 08 85 C0 74 14 50 8B 44 24 08 68 80 00"; //credit to marker patch for this
-    uintptr_t  saveStringAddress = Utils::FindPattern(hExe, saveStringSignature);
-    if (saveStringAddress != 0)
-    {
-        void* pSaveCopyTarget = reinterpret_cast<void*>(saveStringAddress);
-        DEBUG_LOG("Found save string handling at 0x%p", pSaveCopyTarget);
-
-        if (MH_CreateHook(pSaveCopyTarget, &hkSaveStringCopy, reinterpret_cast<LPVOID*>(&oSaveStringCopy)) == MH_OK)
+        const char* saveStringSignature = "8B 44 24 08 85 C0 74 14 50 8B 44 24 08 68 80 00"; //credit to marker patch for this
+        uintptr_t  saveStringAddress = Utils::FindPattern(hExe, saveStringSignature);
+        if (saveStringAddress != 0)
         {
-            MH_EnableHook(pSaveCopyTarget);
-            DEBUG_LOG("Save string handling hooked, should be safer");
-        }
-    }
+            void* pSaveCopyTarget = reinterpret_cast<void*>(saveStringAddress);
+            DEBUG_LOG("Found save string handling at 0x%p", pSaveCopyTarget);
 
-    if (Config::PatchOutDInput8) {
-        const char* useDirectInputSignature = "81 EC 84 00 00 00 53 56 57 33 DB 6A 4C 8D 44 24 48 53 50 89 5C 24 20 89 5C 24 1C 89 5C 24 4C E8 ? ? ? ?";
-        uintptr_t useDirectInputAddress = Utils::FindPattern(hExe, useDirectInputSignature);
-
-        if (useDirectInputAddress != 0)
-        {
-            void* pUseDirectInputTarget = reinterpret_cast<void*>(useDirectInputAddress);
-
-            if (MH_CreateHook(pUseDirectInputTarget, &hkShouldUseDirectInput, reinterpret_cast<LPVOID*>(&oShouldUseDirectInput)) == MH_OK)
+            if (MH_CreateHook(pSaveCopyTarget, &hkSaveStringCopy, reinterpret_cast<LPVOID*>(&oSaveStringCopy)) == MH_OK)
             {
-                MH_EnableHook(pUseDirectInputTarget);
-                DEBUG_LOG("Removed terrible controller API checker");
+                MH_EnableHook(pSaveCopyTarget);
+                DEBUG_LOG("Save string handling hooked, should be safer");
             }
         }
-    }
 
-    QueryPerformanceFrequency(&g_TimerFrequency);
-    QueryPerformanceCounter(&g_LastFrameTime);
+        if (Config::PatchOutDInput8) {
+            const char* useDirectInputSignature = "81 EC 84 00 00 00 53 56 57 33 DB 6A 4C 8D 44 24 48 53 50 89 5C 24 20 89 5C 24 1C 89 5C 24 4C E8 ? ? ? ?";
+            uintptr_t useDirectInputAddress = Utils::FindPattern(hExe, useDirectInputSignature);
 
-    //wait for the window
-    HWND hwnd = nullptr;
+            if (useDirectInputAddress != 0)
+            {
+                void* pUseDirectInputTarget = reinterpret_cast<void*>(useDirectInputAddress);
 
-    while (!hwnd)
-    {
-        //could be done better
-        hwnd = FindWindowA("DeadSpaceWndClass", nullptr);
-        Sleep(100);
-    }
-
-    //create a dummy D3D9 device to steal vtable
-    IDirect3D9* pD3D = Direct3DCreate9(D3D_SDK_VERSION);
-    if (!pD3D) return 0;
-
-    D3DPRESENT_PARAMETERS d3dpp = {};
-    d3dpp.Windowed = TRUE;
-    d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
-    d3dpp.hDeviceWindow = hwnd;
-
-    IDirect3DDevice9* pDummyDevice = nullptr;
-    HRESULT hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDummyDevice);
-
-    if (SUCCEEDED(hr))
-    {
-        void** pVTable = *reinterpret_cast<void***>(pDummyDevice);
-        
-        void* pSetSamplerStateTarget = pVTable[69];
-
-        //create and enable hook
-        MH_CreateHook(pSetSamplerStateTarget, &hkSetSamplerState, reinterpret_cast<LPVOID*>(&oSetSamplerState));
-        MH_EnableHook(pSetSamplerStateTarget);
-
-        if (Config::SafeFPSCap)
-        {
-            void* pEndSceneTarget = pVTable[42];
-            MH_CreateHook(pEndSceneTarget, &hkEndScene, reinterpret_cast<LPVOID*>(&oEndScene));
-            MH_EnableHook(pEndSceneTarget);
+                if (MH_CreateHook(pUseDirectInputTarget, &hkShouldUseDirectInput, reinterpret_cast<LPVOID*>(&oShouldUseDirectInput)) == MH_OK)
+                {
+                    MH_EnableHook(pUseDirectInputTarget);
+                    DEBUG_LOG("Removed terrible controller API checker");
+                }
+            }
         }
 
-        //cleanup
-        pDummyDevice->Release();
+        QueryPerformanceFrequency(&g_TimerFrequency);
+        QueryPerformanceCounter(&g_LastFrameTime);
+
+        //wait for the window
+        HWND hwnd = nullptr;
+
+        while (!hwnd)
+        {
+            //could be done better
+            hwnd = FindWindowA("DeadSpaceWndClass", nullptr);
+            Sleep(100);
+        }
+
+        //create a dummy D3D9 device to steal vtable
+        IDirect3D9* pD3D = Direct3DCreate9(D3D_SDK_VERSION);
+        if (!pD3D) return 0;
+
+        D3DPRESENT_PARAMETERS d3dpp = {};
+        d3dpp.Windowed = TRUE;
+        d3dpp.SwapEffect = D3DSWAPEFFECT_DISCARD;
+        d3dpp.hDeviceWindow = hwnd;
+
+        IDirect3DDevice9* pDummyDevice = nullptr;
+        HRESULT hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &pDummyDevice);
+
+        if (SUCCEEDED(hr))
+        {
+            void** pVTable = *reinterpret_cast<void***>(pDummyDevice);
+
+            void* pSetSamplerStateTarget = pVTable[69];
+
+            //create and enable hook
+            MH_CreateHook(pSetSamplerStateTarget, &hkSetSamplerState, reinterpret_cast<LPVOID*>(&oSetSamplerState));
+            MH_EnableHook(pSetSamplerStateTarget);
+
+            if (Config::SafeFPSCap)
+            {
+                void* pEndSceneTarget = pVTable[42];
+                MH_CreateHook(pEndSceneTarget, &hkEndScene, reinterpret_cast<LPVOID*>(&oEndScene));
+                MH_EnableHook(pEndSceneTarget);
+            }
+
+            //cleanup
+            pDummyDevice->Release();
+        }
+
+        pD3D->Release();
+
+        return 0;
+
     }
-
-    pD3D->Release();
-
     return 0;
 }
 
