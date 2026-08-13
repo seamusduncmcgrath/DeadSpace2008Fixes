@@ -113,7 +113,7 @@ namespace Utils {
                         }
                     }
                     if (found) {
-                        reinterpret_cast<uintptr_t>(&region[candidateOffset]);
+                        return reinterpret_cast<uintptr_t>(&region[candidateOffset]);
                     }
                 }
                 mask &= mask - 1;
@@ -124,7 +124,7 @@ namespace Utils {
         for (; i <= maxScanIndex; i++)
         {
             bool found = true;
-            for (std::size_t j = 0; j < patternLen; i++)
+            for (std::size_t j = 0; j < patternLen; j++)
             {
                 if (patternBytes[j] != -1 && region[i + j] != static_cast<uint8_t>(patternBytes[j]))
                 {
@@ -145,7 +145,7 @@ namespace Utils {
         auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
         auto patternBytes = PatternToBytes(signature);
 
-        return ScanRegion(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, patternBytes);
+        return ScanRegionSSE2(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, patternBytes);
     }
 
     //Bounded variant: searches only [startAddress, endAddress) inside the module image
