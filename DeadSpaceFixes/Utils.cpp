@@ -64,6 +64,79 @@ namespace Utils {
         return 0;
     }
 
+    //rewrite of ScanRegion to use SSE2 cause why not, just about every 64bit CPU since 2003 supports it, and this is like 16x faster
+    static uintptr_t ScanRegionSSE2(std::uint8_t* region, std::size_t regionSize, const std::vector<int>& patternBytes) {
+        const std::size_t patternLen = patternBytes.size();
+        if (regionSize < patternLen) return 0;
+
+        //find the first non wildcarded byte to use as a needle
+        std::size_t firstValidIdx = 0;
+        for (; firstValidIdx < patternLen; ++firstValidIdx) 
+        {
+            if (patternBytes[firstValidIdx] != -1) break;
+        }
+
+        if (firstValidIdx == patternLen) return reinterpret_cast<uintptr_t>(region);
+
+        const uint8_t needleByte = static_cast<uint8_t>(patternBytes[firstValidIdx]);
+        const __m128i needleVec = _mm_set1_epi8(needleByte);
+
+        const std::size_t maxScanIndex = regionSize - patternLen;
+
+        //scan memory 16 bytes at a time
+        std::size_t i = 0;
+        for (; i + 16 <= maxScanIndex; i += 16) 
+        {
+            //load 16 bytes from mem
+            __m128i memoryVec = _mm_loadu_si128(reinterpret_cast<const __m128i*>(&region[i + firstValidIdx]));
+
+            //compare all 16 bytes against the needle in 1 instruction
+            __m128i cmpResult = _mm_cmpeq_epi8(needleVec, memoryVec);
+
+            int mask = _mm_movemask_epi8(cmpResult);
+            while (mask != 0)
+            {
+                unsigned long bitIndex;
+                _BitScanForward(&bitIndex, mask);
+
+                std::size_t candidateOffset = i + bitIndex;
+
+                if (candidateOffset <= maxScanIndex)
+                {
+                    bool found = true;
+                    for (std::size_t j = 0; j < patternLen; j++)
+                    {
+                        if (patternBytes[j] != -1 && region[candidateOffset + j] != static_cast<uint8_t>(patternBytes[j]))
+                        {
+                            found = false;
+                            break;
+                        }
+                    }
+                    if (found) {
+                        return reinterpret_cast<uintptr_t>(&region[candidateOffset]);
+                    }
+                }
+                mask &= mask - 1;
+            }
+        }
+
+        //fallback for remaining bytes
+        for (; i <= maxScanIndex; i++)
+        {
+            bool found = true;
+            for (std::size_t j = 0; j < patternLen; j++)
+            {
+                if (patternBytes[j] != -1 && region[i + j] != static_cast<uint8_t>(patternBytes[j]))
+                {
+                    found = false;
+                    break;
+                }
+            }
+            if (found) return reinterpret_cast<uintptr_t>(&region[i]);
+        }
+        return 0;
+    }
+
     uintptr_t FindPattern(HMODULE hModule, const char* signature)
     {
         auto dosHeader = (PIMAGE_DOS_HEADER)hModule;
@@ -72,7 +145,7 @@ namespace Utils {
         auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
         auto patternBytes = PatternToBytes(signature);
 
-        return ScanRegion(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, patternBytes);
+        return ScanRegionSSE2(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, patternBytes);
     }
 
     //Bounded variant: searches only [startAddress, endAddress) inside the module image
@@ -93,9 +166,29 @@ namespace Utils {
         if (endAddress <= startAddress) return 0;
 
         auto patternBytes = PatternToBytes(signature);
-        return ScanRegion(reinterpret_cast<std::uint8_t*>(startAddress), endAddress - startAddress, patternBytes);
+        return ScanRegionSSE2(reinterpret_cast<std::uint8_t*>(startAddress), endAddress - startAddress, patternBytes);
     }
+	
 
+	//Finds a literal C-string (including its null terminator) anywhere in the
+	//image. Unlike FindPattern, the needle is matched byte-for-byte with no
+	//wildcards, so it can locate game data (e.g. checkpoint names) regardless of
+	//how the code that references it is laid out in a given build.	
+	
+	uintptr_t FindString(HMODULE hModule, const char* needle)
+	{
+		auto dosHeader = (PIMAGE_DOS_HEADER)hModule;
+		auto ntHeaders = (PIMAGE_NT_HEADERS)((std::uint8_t*)hModule + dosHeader->e_lfanew);
+		auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
+
+		auto bytes = std::vector<int>{};
+		for (const char* c = needle; *c != '\0'; ++c)
+			bytes.push_back(static_cast<unsigned char>(*c));
+		bytes.push_back(0); //match the null terminator too, so we land on a real string start
+
+		return ScanRegionSSE2(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, bytes);
+	}
+    //AI
     bool WriteBytes(uintptr_t address, const void* data, std::size_t size)
     {
         DWORD oldProtect;
