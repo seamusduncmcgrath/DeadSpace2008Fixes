@@ -11,7 +11,13 @@
 #include <vector>
 #include <cstdint>
 
+//MinHook declares MH_STATUS as a C-style unscoped enum, which trips the
+//C++ Core Guidelines warning C26812 (Enum.3). It's a third-party header we
+//can't change, so disable the warning around the include only.
+#pragma warning(push)
+#pragma warning(disable: 26812)
 #include "MinHook\MinHook.h"
+#pragma warning(pop)
 #include "SDL3/SDL.h"
 #include "TypeDefs.h"
 #include "WindowHooks.h"
@@ -220,24 +226,59 @@ __declspec(naked) void hkSubtitleScale() //note to self comment well
     }
 }
 
+//AI:
+//NG+ intro cutscene skip: NG+ seeds the 16-byte checkpoint record from object
+//state at runtime (a normal new game resolves the checkpoint by name instead),
+//so a content rewrite alone can't cover it. We hook the record-creating
+//function with MinHook and substitute the "kellion" (landed on Ishimura) checkpoint for the
+//"initial" before it's committed. The checkpoint hashes are derived from
+//the checkpoint names in the game's save data, so these constants are stable
+//across builds.
+typedef void(__cdecl* CreateCheckpointRecord_t)(void* arg1, void* arg2, uint32_t rec0, uint32_t rec1, uint32_t rec2, uint32_t rec3);
+CreateCheckpointRecord_t oCreateCheckpointRecord = nullptr;
+
+void __cdecl hkCreateCheckpointRecord(void* arg1, void* arg2, uint32_t rec0, uint32_t rec1, uint32_t rec2, uint32_t rec3)
+{
+	static const uint32_t kCheckpointIntro[4] = { 0x4BC8A99C, 0xD622DBBB, 0x544E4543, 0x53574F4B };
+	static const uint32_t kCheckpointIshimura[4] = { 0x4BC78C36, 0x9F71988A, 0x544E4543, 0x53574F4B };
+
+    //r3: human version used memcmp/memcpy for code simplicity
+	if (rec0 == kCheckpointIntro[0] && rec1 == kCheckpointIntro[1] &&
+		rec2 == kCheckpointIntro[2] && rec3 == kCheckpointIntro[3])
+	{
+		rec0 = kCheckpointIshimura[0];
+		rec1 = kCheckpointIshimura[1];
+		rec2 = kCheckpointIshimura[2];
+		rec3 = kCheckpointIshimura[3];
+	}
+
+	oCreateCheckpointRecord(arg1, arg2, rec0, rec1, rec2, rec3);
+}
+
 
 void InitialiseNetworkHooks()
 {
     HMODULE hWinSock = GetModuleHandleA("ws2_32.dll");
-    FARPROC pWSAStartup = GetProcAddress(hWinSock, "WSAStartup");
-    if (pWSAStartup)
+    if (hWinSock != nullptr) //GetModuleHandleA can fail, guard against the NULL deref before passing to GetProcAddress
     {
-        MH_CreateHook(pWSAStartup, &hkWSAStartup, reinterpret_cast<LPVOID*>(&OriginalWSAStartup));
-        MH_EnableHook(pWSAStartup);
-        DEBUG_LOG("WSAStartup hooked, all network/telemetry blocked");
+        FARPROC pWSAStartup = GetProcAddress(hWinSock, "WSAStartup");
+        if (pWSAStartup)
+        {
+            MH_CreateHook(pWSAStartup, &hkWSAStartup, reinterpret_cast<LPVOID*>(&OriginalWSAStartup));
+            MH_EnableHook(pWSAStartup);
+            DEBUG_LOG("WSAStartup hooked, all network/telemetry blocked");
+        }
     }
     HMODULE hNetApi = LoadLibraryA("netapi32.dll"); //some games don't properly load this so we LoadLibrary it
-    FARPROC pNetbios = GetProcAddress(hNetApi, "Netbios");
-    if (pNetbios)
+    if (hNetApi != nullptr) //LoadLibraryA can also fail, same guard
     {
-        MH_CreateHook(pNetbios, &hkNetbios, reinterpret_cast<LPVOID*>(&OriginalNetbios));
-        MH_EnableHook(pNetbios);
-        DEBUG_LOG("Netbios also hooked, weird NAT harvester is now blocked");
+        FARPROC pNetbios = GetProcAddress(hNetApi, "Netbios");
+        if (pNetbios)
+        {
+            MH_CreateHook(pNetbios, &hkNetbios, reinterpret_cast<LPVOID*>(&OriginalNetbios));
+            MH_EnableHook(pNetbios);
+            DEBUG_LOG("Netbios also hooked, weird NAT harvester is now blocked");
+        }
     }
 }
 
@@ -452,29 +493,46 @@ DWORD WINAPI MainThread(LPVOID)
     }
 
     if (Config::SkipLandingCutscene) {
-        const char* introSkipSig = "83 EC 30 8B 88 88 08 00 00 53 56 57 89 0D ? ? ? ? 68 ? ? ? ? 8D 4C 24 24";
-        uintptr_t introSkipAddress = Utils::FindPattern(hExe, introSkipSig);
-        if (introSkipAddress != 0)
+        //AI: A normal new game resolves the checkpoint by name. The "new game"
+        //checkpoint name is game data (identical in every build), so locate it
+        //by content and rewrite it to the "kellion" (landed on Ishimura) checkpoint name. Both
+        //names are the same length, so the null terminator stays put.
+        //r3: previous (human) version used code hook and pointer to find that string location similar to version string swap. AI implemented the direct string swap instead 
+        uintptr_t checkpointNameAddress = Utils::FindString(hExe, "XCENTKOWSK_C8A99CD_622DBBB_v3");
+        if (checkpointNameAddress != 0)
         {
-            char* pIntroSkipString = *reinterpret_cast<char**>(introSkipAddress + 0x13);
-            DEBUG_LOG("Found string at 0x%p", pIntroSkipString);
-            DEBUG_LOG("Intro string is %s", pIntroSkipString);
-
-            const char* stringToSkipIntro("XCENTKOWSK_C78C369_F71988A_v3");
-
-            DWORD oldProtect;
-            if (VirtualProtect(pIntroSkipString, 29, PAGE_EXECUTE_READWRITE, &oldProtect))
-            {
-                memcpy(pIntroSkipString, stringToSkipIntro, 29);
-                VirtualProtect(pIntroSkipString, 29, oldProtect, &oldProtect);
+            const char* landingSeenName = "XCENTKOWSK_C78C369_F71988A_v3";
+            if (Utils::WriteBytes(checkpointNameAddress, landingSeenName, 29))
                 DEBUG_LOG("Skipped intro!");
-            }
-            else {
+            else
                 DEBUG_LOG("Failed to skip intro!");
+        }
+
+        //AI:
+        //NG+ variant: NG+ seeds the checkpoint record from object state instead
+        //of resolving it by name, so the name rewrite above never runs. Hook the
+        //record-creating function and rewrite the New Game checkpoint for the
+        //kellion (landed on Ishimura) before it's committed.
+        //r3: previous (human) version used to hook the tail of the function, 
+        // instead of prologue, finding CP address and writing to it. 
+        // in this version old CP is swapped on entry, not going further. 
+        const char* ngPlusSig = "83 EC 0C 56 57 E8 ?? ?? ?? ?? 64 A1 2C 00 00 00 8B 30";
+        uintptr_t ngPlusAddress = Utils::FindPattern(hExe, ngPlusSig);
+        if (ngPlusAddress != 0)
+        {
+            if (MH_CreateHook(reinterpret_cast<void*>(ngPlusAddress), &hkCreateCheckpointRecord,
+                              reinterpret_cast<LPVOID*>(&oCreateCheckpointRecord)) == MH_OK &&
+                MH_EnableHook(reinterpret_cast<void*>(ngPlusAddress)) == MH_OK)
+            {
+                DEBUG_LOG("NG+ landing cutscene skip hooked at 0x%X", ngPlusAddress);
+            }
+            else
+            {
+                DEBUG_LOG("Failed to hook NG+ landing cutscene skip");
             }
         }
     }
-
+    //AI
     if (Config::SkipIntroToMainMenu) {
         //SkipIntroToMainMenu: skip the boot intro and jump straight to the main menu.
         //Reverse engineered and implemented by AI.

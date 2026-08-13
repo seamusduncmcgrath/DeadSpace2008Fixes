@@ -15,7 +15,7 @@ namespace Utils {
         freopen_s(&fDummy, "CONOUT$", "w", stdout);
         freopen_s(&fDummy, "CONOUT$", "w", stderr);
     }
-
+    //AI:
     //Converts a signature string like "8B ? 50 F3 0F" into a byte array where -1 means
     //"any byte" (the ? wildcard). Extracted into its own helper so the whole-image and
     //bounded scans below share exactly the same parsing rules (the original FindPattern
@@ -39,7 +39,7 @@ namespace Utils {
         }
         return bytes;
     }
-
+    //AI:
     //Scans [region, region+regionSize) for patternBytes. Shared by both FindPattern
     //variants. The regionSize <= s guard also fixes a latent issue in the old inlined
     //loop: `sizeOfImage - s` could wrap around to a huge value (and read out of bounds)
@@ -74,7 +74,7 @@ namespace Utils {
 
         return ScanRegion(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, patternBytes);
     }
-
+    //AI:
     //Bounded variant: searches only [startAddress, endAddress) inside the module image
     //(clamped to the image base/size). Used by SkipIntroToMainMenu, where the attract
     //state's exit sequence is structurally similar to other frontend code and would be
@@ -95,7 +95,27 @@ namespace Utils {
         auto patternBytes = PatternToBytes(signature);
         return ScanRegion(reinterpret_cast<std::uint8_t*>(startAddress), endAddress - startAddress, patternBytes);
     }
+	
+    //AI:
+	//Finds a literal C-string (including its null terminator) anywhere in the
+	//image. Unlike FindPattern, the needle is matched byte-for-byte with no
+	//wildcards, so it can locate game data (e.g. checkpoint names) regardless of
+	//how the code that references it is laid out in a given build.	
+	
+	uintptr_t FindString(HMODULE hModule, const char* needle)
+	{
+		auto dosHeader = (PIMAGE_DOS_HEADER)hModule;
+		auto ntHeaders = (PIMAGE_NT_HEADERS)((std::uint8_t*)hModule + dosHeader->e_lfanew);
+		auto sizeOfImage = ntHeaders->OptionalHeader.SizeOfImage;
 
+		auto bytes = std::vector<int>{};
+		for (const char* c = needle; *c != '\0'; ++c)
+			bytes.push_back(static_cast<unsigned char>(*c));
+		bytes.push_back(0); //match the null terminator too, so we land on a real string start
+
+		return ScanRegion(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, bytes);
+	}
+    //AI
     bool WriteBytes(uintptr_t address, const void* data, std::size_t size)
     {
         DWORD oldProtect;
