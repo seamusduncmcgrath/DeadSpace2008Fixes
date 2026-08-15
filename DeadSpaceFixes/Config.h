@@ -9,5 +9,6 @@ namespace Config {
     extern bool FixSubtitleScale;
     extern bool SkipLandingCutscene;
     extern bool SkipIntroToMainMenu;
+    extern bool SkipLoadingScreenDelay;
     void Load();
 }

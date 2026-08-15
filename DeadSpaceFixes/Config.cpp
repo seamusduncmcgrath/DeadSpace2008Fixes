@@ -12,8 +12,10 @@ namespace Config {
 	bool FixSubtitleScale = true;
 	bool SkipLandingCutscene = false;
 	bool SkipIntroToMainMenu = false;
+	bool SkipLoadingScreenDelay = false;
 
 	//AI-written config handling: generates DeadSpaceFixes.ini on first launch
+	//(loading-screen-delay option below reverse engineered by AI, see dllmain.cpp).
 	//(with human-readable help comments above each key), and "heals" an
 	//existing file by re-adding any keys that a newer build introduced. This
 	//replaces the old behaviour of silently reading defaults for unknown keys,
@@ -26,7 +28,7 @@ namespace Config {
 		// Bump this whenever the [Settings] key set changes. A stale config file
 		// is then regenerated with the canonical keys instead of silently
 		// dropping options the current build doesn't know about.
-		constexpr int kConfigVersion = 1;
+		constexpr int kConfigVersion = 2;
 
 		// Every known option is declared here once and used everywhere below,
 		// so the default, the help text and the read/write logic can't drift
@@ -46,6 +48,7 @@ namespace Config {
 			{ "SafeFPSCap", 0, "Cap the framerate to avoid physics/script issues" },
 			{ "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
 			{ "SkipIntroToMainMenu", 0, "Skip the boot intro and launch main menu immediately" },
+			{ "SkipLoadingScreenDelay", 0, "Skip the artificial wait on the loading screen once the level is ready" },
 		};
 
 		// Note: the game's config lives next to the .exe (the DLL runs from the
@@ -110,5 +113,6 @@ namespace Config {
 		SafeFPSCap = GetPrivateProfileIntA(kSettingsSection, "SafeFPSCap", 0, configPath.c_str()) != 0;
 		SkipLandingCutscene = GetPrivateProfileIntA(kSettingsSection, "SkipIshimuraLandingCutscene", 0, configPath.c_str()) != 0;
 		SkipIntroToMainMenu = GetPrivateProfileIntA(kSettingsSection, "SkipIntroToMainMenu", 0, configPath.c_str()) != 0;
+		SkipLoadingScreenDelay = GetPrivateProfileIntA(kSettingsSection, "SkipLoadingScreenDelay", 0, configPath.c_str()) != 0;
 	}
 }
