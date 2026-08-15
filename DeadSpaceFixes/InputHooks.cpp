@@ -44,8 +44,6 @@ namespace Input {
 
     void InitialiseInputHooks()
     {
-        if (MH_Initialize() != MH_OK) return;
-
         //dinput8 hook
         HMODULE hDinput8 = LoadLibraryA("dinput8.dll");
         if (hDinput8)

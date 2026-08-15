@@ -188,13 +188,14 @@ namespace Utils {
 
 		return ScanRegionSSE2(reinterpret_cast<std::uint8_t*>(hModule), sizeOfImage, bytes);
 	}
-    //AI
+
     bool WriteBytes(uintptr_t address, const void* data, std::size_t size)
     {
         DWORD oldProtect;
         if (!VirtualProtect(reinterpret_cast<void*>(address), size, PAGE_EXECUTE_READWRITE, &oldProtect))
             return false;
         memcpy(reinterpret_cast<void*>(address), data, size);
+        FlushInstructionCache(GetCurrentProcess(), reinterpret_cast<void*>(address), size);
         VirtualProtect(reinterpret_cast<void*>(address), size, oldProtect, &oldProtect);
         return true;
     }

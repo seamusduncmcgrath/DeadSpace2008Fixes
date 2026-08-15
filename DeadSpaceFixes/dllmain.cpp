@@ -1,22 +1,7 @@
 #define WIN32_LEAN_AND_MEAN
 #define _CRT_SECURE_NO_WARNINGS
 
-#include <winsock2.h>
-#include <windows.h>
-#include <nb30.h>
-#include <d3d9.h>
-#include <dinput.h>
-#include <string>
 #include <iostream>
-#include <vector>
-#include <cstdint>
-#include <emmintrin.h>
-#include <tmmintrin.h>
-#include <intrin.h>
-
-//MinHook declares MH_STATUS as a C-style unscoped enum, which trips the
-//C++ Core Guidelines warning C26812 (Enum.3). It's a third-party header we
-//can't change, so disable the warning around the include only.
 #pragma warning(push)
 #pragma warning(disable: 26812)
 #include "MinHook\MinHook.h"
@@ -27,7 +12,6 @@
 #include "Utils.h"
 #include "InputHooks.h"
 #include "Config.h"
-
 
 //Globals
 SetSamplerState_t oSetSamplerState = nullptr;
@@ -42,6 +26,7 @@ XInputGetState_t oXInputGetState = nullptr;
 XInputSetState_t oXInputSetState = nullptr;
 XInputGetCapabilities_t oXInputGetCapabilities = nullptr;
 ShouldUseDirectInput_t oShouldUseDirectInput = nullptr; //wish these weren't such a pain so this could be in inputhooks.cpp
+void* oSubtitleSettings = nullptr;
 
 float subtitleScale = 1.0f; //feel like 0.8 is a better baseline, subtitles clip out less then
 int g_TargetFPS = 60;
@@ -258,6 +243,81 @@ void __cdecl hkCreateCheckpointRecord(void* arg1, void* arg2, uint32_t rec0, uin
 	oCreateCheckpointRecord(arg1, arg2, rec0, rec1, rec2, rec3);
 }
 
+#pragma pack(push, 1)
+struct SubtitleSettings {
+    float x;         // 0x00 (EDI)
+    float y;         // 0x04 (EDI + 0x4)
+    float boundingBoxX;    // 0x08 (EDI + 0x8)
+    float boundingBoxY;    // 0x0C (EDI + 0xC)
+    uint32_t unk10;  // 0x10
+    uint32_t unk14;  // 0x14
+    float fontScale;     // 0x18
+    uint32_t pad1C;  // 0x1C
+    uint32_t color1; // 0x20
+    uint32_t color2; // 0x24
+    uint8_t  pad28;  // 0x28
+    uint8_t  flag29; // 0x29
+};
+#pragma pack(pop)
+
+void __stdcall LogSubtitleFunc(void* eax, int ecx, uint32_t stackParam) {
+    SubtitleSettings** pData = reinterpret_cast<SubtitleSettings**>(eax);
+    if (!pData || !*pData) return;
+
+    SubtitleSettings* data = *pData;
+
+    int screenWidth = GetSystemMetrics(SM_CXSCREEN);
+    int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+
+    float subtitleMultiplier = static_cast<float>(screenHeight) / 720.0f;
+    float aspectFix = (static_cast<float>(screenWidth) / screenHeight) / (16.0f / 9.0f);
+
+    //define the games origional values, easier to just do this rather than get em at runtime
+    const float origX = 0.20f;
+    const float origY = 0.25f;
+    const float origW = 0.60f;
+    const float origH = 0.10f;
+    const float origScale = 0.60f;
+
+    float newW = origW * subtitleMultiplier * aspectFix;
+    float newH = origH * subtitleMultiplier;
+    float newScale = origScale * subtitleMultiplier;
+
+    //calculate the original center points
+    //center = start position + (size / 2)
+    float centerX = origX + (origW / 2.0f); // Always 0.5 (perfect horizontal center)
+    float centerY = origY + (origH / 2.0f); // Always 0.3
+
+    //shift the X and Y start positions so the expanded bounding box stays centered
+    data->x = centerX - (newW / 2.0f);
+    data->y = centerY - (newH / 2.0f);
+
+    data->boundingBoxX = newW;
+    data->boundingBoxY = newH;
+    data->fontScale = newScale;
+}
+
+//naked hook cause compiler bs
+__declspec(naked) void hkSubtitleSettings() {
+    __asm {
+        pushad
+        pushfd
+
+        mov edx, dword ptr[esp + 40]
+
+        push edx
+        push ecx
+        push eax
+
+        call LogSubtitleFunc
+
+        popfd
+        popad
+
+        jmp dword ptr[oSubtitleSettings]
+    }
+}
+
 
 void InitialiseNetworkHooks()
 {
@@ -385,6 +445,8 @@ DWORD WINAPI MainThread(LPVOID)
     Utils::InitialiseConsole();
 #endif
 
+    MH_Initialize();
+
     if (Config::PatchOutDInput8) {
         Input::InitialiseInputHooks();
     }
@@ -405,7 +467,6 @@ DWORD WINAPI MainThread(LPVOID)
     //high precision timer fix, can fix some of the issues with high framerates. Should still cap to 120-180 max, as 200-300 the issues come back
     //crazy because the reason why this even works is they had a flag toggled to 0 that makes the game use GetTickCount(), but if you set it to 1 it uses QueryPerformanceCounter()
     //which is much more precise and works much better at high FPS, they probably did this due to a issue where QueryPerformanceCounter() would desync and drift on old AMD Athlon X2 CPU's when the game came out
-
     if (patternAddress != 0)
     {
         DEBUG_LOG("Signature for high precision timer found at 0x%X", patternAddress);
@@ -425,55 +486,26 @@ DWORD WINAPI MainThread(LPVOID)
 
     if (Config::FixVSync) {
         const char* vsyncMenuSig = "BA 02 00 00 00 EB ? 33 D2 89 15";
-        uintptr_t vsyncmenuAddress = Utils::FindPattern(hExe, vsyncMenuSig);
+        uintptr_t vsyncmenuAddress = Utils::FindPattern(hExe, vsyncMenuSig) + 1;
 
         if (vsyncmenuAddress != 0)
         {
-            void* patchAddress = reinterpret_cast<void*>(vsyncmenuAddress + 1);
-            DEBUG_LOG("Found vsync menu address at 0x%p", patchAddress);
-
-            DWORD oldProtect;
-            if (VirtualProtect(patchAddress, 1, PAGE_EXECUTE_READWRITE, &oldProtect))
-            {
-                *static_cast<BYTE*>(patchAddress) = 0x00;
-                VirtualProtect(patchAddress, 1, oldProtect, &oldProtect);
-                DEBUG_LOG("Patched menu vsync");
-            }
+            const BYTE disableCap = 0x00;
+            if (Utils::WriteBytes(vsyncmenuAddress, &disableCap, sizeof(disableCap)))
+                DEBUG_LOG("Patched vsync mode!");
         }
     }
 
-    if (Config::FixSubtitleScale)
-    {
-        const char* subtitleSignature = "83 7E 1C 00 F3 0F 10 46 44 F3 0F 59 45 18 53 8B 5D 1C";
-        uintptr_t subtitleAddress = Utils::FindPattern(hExe, subtitleSignature);
+    if (Config::FixSubtitleScale) {
+        const char* subtitleSettingsSignature = "55 8B EC 83 E4 F8 83 EC 14 53 56 8B F1 57 8B 38 8B 4F";
+        uintptr_t subtitleAddres = Utils::FindPattern(hExe, subtitleSettingsSignature);
 
-        if (subtitleAddress != 0)
+        if (subtitleAddres != 0)
         {
-            void* patchAddress = reinterpret_cast<void*>(subtitleAddress + 9);
-            DEBUG_LOG("Found subtitle scale hook at 0x%p", patchAddress);
+            DEBUG_LOG("Hooked subtitle settings at 0x%X", subtitleAddres);
+            MH_CreateHook(reinterpret_cast<void*>(subtitleAddres), &hkSubtitleSettings, &oSubtitleSettings);
 
-            //calculate the correct scale
-            //DS1 was only designed for up to 720p, so subtitles don't scale above it, so we just (try to) correctly scale it here
-            int screenHeight = GetSystemMetrics(SM_CYSCREEN);
-            //subtitleScale = screenHeight / 1080.0f; //720 would be better but I'm to lazy to figure it out
-
-            DEBUG_LOG("Subtitle scale is now %f", subtitleScale);
-
-            subtitleHookReturn = reinterpret_cast<uintptr_t>(patchAddress) + 5;
-
-            DWORD oldProtect;
-            if (VirtualProtect(patchAddress, 5, PAGE_EXECUTE_READWRITE, &oldProtect))
-            {
-                BYTE* pByte = reinterpret_cast<BYTE*>(patchAddress);
-
-                //write the E9 JMP
-                pByte[0] = 0xE9;
-
-                *reinterpret_cast<uintptr_t*>(pByte + 1) = reinterpret_cast<uintptr_t>(&hkSubtitleScale) - reinterpret_cast<uintptr_t>(patchAddress) - 5;
-
-                VirtualProtect(patchAddress, 5, oldProtect, &oldProtect);
-                DEBUG_LOG("Subtitles scaled");
-            }
+            MH_EnableHook(reinterpret_cast<void*>(subtitleAddres));
         }
     }
 

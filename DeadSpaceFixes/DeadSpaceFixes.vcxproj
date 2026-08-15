@@ -86,12 +86,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;advapi32.lib;gdi32.lib;imm32.lib;
-ole32.lib;
-oleaut32.lib;opengl32.lib
-;setupapi.lib;
-shell32.lib;version.lib
-;winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -114,12 +109,7 @@ shell32.lib;version.lib
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;advapi32.lib;gdi32.lib;imm32.lib;
-ole32.lib;
-oleaut32.lib;opengl32.lib
-;setupapi.lib;
-shell32.lib;version.lib
-;winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -140,12 +130,7 @@ shell32.lib;version.lib
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;advapi32.lib;gdi32.lib;imm32.lib;
-ole32.lib;
-oleaut32.lib;opengl32.lib
-;setupapi.lib;
-shell32.lib;version.lib
-;winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -168,12 +153,7 @@ shell32.lib;version.lib
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;advapi32.lib;gdi32.lib;imm32.lib;
-ole32.lib;
-oleaut32.lib;opengl32.lib
-;setupapi.lib;
-shell32.lib;version.lib
-;winmm.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
