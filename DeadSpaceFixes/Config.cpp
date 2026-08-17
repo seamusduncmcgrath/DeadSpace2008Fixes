@@ -55,7 +55,12 @@ namespace Config {
 		// game folder), so resolve it against the working directory rather than
 		// %APPDATA%.
 		std::string GetConfigPath() {
-			return (std::filesystem::current_path() / kIniName).string();
+			return kIniName;
+		}
+
+		bool FileExists(const std::string& path) {
+			DWORD attributes = GetFileAttributesA(path.c_str());
+			return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
 		}
 
 		// First run: write a fresh .ini. Each key is preceded by a "; help"
@@ -97,7 +102,7 @@ namespace Config {
 
 		// Generate the .ini on first run, otherwise heal any keys that newer
 		// builds added. After either step the file is guaranteed complete.
-		if (!std::filesystem::exists(configPath)) {
+		if (!FileExists(configPath)) {
 			WriteDefaultConfig(configPath);
 		}
 		else {
