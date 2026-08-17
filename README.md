@@ -69,7 +69,7 @@ Skips the Ishimura landing cutscene to help with speedrunning the game.
 Skips the boot intro and lands directly on the main menu. Set `SkipIntroToMainMenu=1` in the config file.
 
 ## (Optional) Skip Loading Screen Delay
-Shortens the artificial wait on the loading screen once the level has finished loading. The vanilla game holds the loading screen on a ~30 second tip-cycling loop even after the level is ready; this cuts that hold to ~3 seconds, so the loading tips still appear but the screen drops almost immediately. Set `SkipLoadingScreenDelay=1` in the config file.
+Shortens the artificial wait on the loading screen once the level has finished loading when starting a new game. The vanilla game holds the loading screen on a ~30 second tip-cycling loop even after the level is ready; this cuts that hold to ~3 seconds, so the loading tips still appear but the screen drops almost immediately. Set `SkipLoadingScreenDelay=1` in the config file.
 
 ## Increased Shadow Count
 Increases the shadow count from 3 to 9.
@@ -81,7 +81,7 @@ Increases the shadow count from 3 to 9.
 >
 > **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest/download/xinput1_3.dll)
 > 
-> Simply add the xinput1_3.dll file you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
+> Simply add the `xinput1_3.dll` `SDL3.dll` files you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
 
 
 # Config
@@ -105,7 +105,7 @@ FixSubtitleScale=1
 SkipIshimuraLandingCutscene=0
 ;Skips the boot intro and lands directly on the main menu
 SkipIntroToMainMenu=0
-;Skips the artificial wait on the loading screen once the level is ready
+;Skips the artificial wait on the loading screen once the level is ready on new game
 SkipLoadingScreenDelay=0
 ```
 
