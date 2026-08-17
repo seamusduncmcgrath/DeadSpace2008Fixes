@@ -4,6 +4,10 @@
 #include <iostream>
 #include <vector>
 #include <cstdint>
+//AI: emmintrin/intrin needed for the SSE2 scanner below to compile with the
+//v142 (VS2019) toolset; upstream builds use v145 where these come in implicitly.
+#include <emmintrin.h>
+#include <intrin.h>
 
 #include "Utils.h"
 
