@@ -37,8 +37,8 @@ Fixes the too small subtitles at resolutions above 720p; no need to squint to se
 <div align="center">
   <table>
     <tr>
-        <td width="10%"><img style="width:100%" src="https://github.com/user-attachments/assets/d8ec2329-fc4a-47fb-b65c-d4b6dc9291bc"></td>
-        <td width="10%"><img style="width:100%" src="https://github.com/user-attachments/assets/e4ec2daf-c264-44d1-b503-018d64f2fa5e"></td>
+        <td width="10%"><img style="width:100%" src="Assets/Images/4k.png"></td>
+        <td width="10%"><img style="width:100%" src="Assets/Images/4kfixed.png"></td>
     </tr>
     <tr>
       <td align="center">Vanilla 4k</td>
@@ -79,7 +79,7 @@ Shortens the artificial wait on the loading screen once the level has finished l
 >
 > **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest/download/xinput1_3.dll)
 > 
-> Simply add the `xinput1_3.dll` `SDL3.dll` and files you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
+> Simply add the `xinput1_3.dll` `SDL3.dll` files you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
 
 
 # Config
