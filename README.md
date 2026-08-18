@@ -77,7 +77,7 @@ Shortens the artificial wait on the loading screen once the level has finished l
 > [!NOTE]  
 > Requires at least Windows 7 SP1 x86 and a CPU with SSE2 support.
 >
-> **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest/download/xinput1_3.dll)
+> **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest)
 > 
 > Simply add the `xinput1_3.dll` `SDL3.dll` files you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
 
