@@ -1,6 +1,5 @@
 #include <Windows.h>
 #include <string>
-#include <filesystem>
 #include "Config.h"
 
 namespace Config {
@@ -55,12 +54,15 @@ namespace Config {
 		// game folder), so resolve it against the working directory rather than
 		// %APPDATA%.
 		std::string GetConfigPath() {
-			return kIniName;
-		}
+			char path[MAX_PATH];
+			GetModuleFileNameA(nullptr, path, MAX_PATH);
 
-		bool FileExists(const std::string& path) {
-			DWORD attributes = GetFileAttributesA(path.c_str());
-			return attributes != INVALID_FILE_ATTRIBUTES && !(attributes & FILE_ATTRIBUTE_DIRECTORY);
+			std::string fullPath(path);
+			std::string::size_type pos = fullPath.find_last_of("\\/");
+			if (pos != std::string::npos) {
+				return fullPath.substr(0, pos) + "\\" + kIniName;
+			}
+			return std::string(".\\") + kIniName;
 		}
 
 		// First run: write a fresh .ini. Each key is preceded by a "; help"
@@ -102,7 +104,7 @@ namespace Config {
 
 		// Generate the .ini on first run, otherwise heal any keys that newer
 		// builds added. After either step the file is guaranteed complete.
-		if (!FileExists(configPath)) {
+		if (GetFileAttributesA(configPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
 			WriteDefaultConfig(configPath);
 		}
 		else {

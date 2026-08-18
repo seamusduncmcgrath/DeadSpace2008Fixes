@@ -7,7 +7,7 @@ A mod for Dead Space (2008) that adds numerous fixes and improvements
 ## Borderless Windowed
 Adds a simple borderless windowed mode that fixes gamma issues and alt-tabbing bugs. To use, simply disable fullscreen in the game settings.
 > [!WARNING]
- Set BorderlessWindowed to 0 in the DeadSpaceFixes.ini if you plan on not using borderless!
+ Set BorderlessWindowed to 0 in the `DeadSpaceFixes.ini` if you plan on not using borderless!
 ## Reduced Issues At High FPS
 A large amount of the physics/ragdoll issues at 60+ FPS are caused by the game relying on GetTickCount, which is really inaccurate. I found an unused developer flag in the engine that allows you to swap GetTickCount for QueryPerformanceCounter, which is much more precise. Visceral likely disabled this because older AMD CPUs had desync issues, but on modern hardware, it works perfectly. *Note:* I still recommend capping the FPS to around 120-180. I was able to complete QTEs and had no issues with ragdolls at a 180 FPS cap, but if it goes above ~200 FPS, the issues start to come back.
 
@@ -71,8 +71,6 @@ Skips the boot intro and lands directly on the main menu. Set `SkipIntroToMainMe
 ## (Optional) Skip Loading Screen Delay
 Shortens the artificial wait on the loading screen once the level has finished loading. The vanilla game holds the loading screen on a ~30 second tip-cycling loop even after the level is ready; this cuts that hold to ~3 seconds, so the loading tips still appear but the screen drops almost immediately. Set `SkipLoadingScreenDelay=1` in the config file.
 
-## Increased Shadow Count
-Increases the shadow count from 3 to 9.
 
 # Install Guide
 
@@ -81,7 +79,7 @@ Increases the shadow count from 3 to 9.
 >
 > **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest/download/xinput1_3.dll)
 > 
-> Simply add the xinput1_3.dll file you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
+> Simply add the `xinput1_3.dll` `SDL3.dll` and files you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
 
 
 # Config
