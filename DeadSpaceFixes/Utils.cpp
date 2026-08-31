@@ -151,7 +151,7 @@ namespace Utils {
     }
 
     //Bounded variant: searches only [startAddress, endAddress) inside the module image
-    //(clamped to the image base/size). Used by SkipIntroToMainMenu, where the attract
+    //(clamped to the image base/size). Used by MainIntroPatch, where the attract
     //state's exit sequence is structurally similar to other frontend code and would be
     //ambiguous if searched across the whole ~16 MB image, but is unique when restricted
     //to a short window immediately after its already-found entry point.

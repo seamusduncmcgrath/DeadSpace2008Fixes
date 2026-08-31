@@ -3,15 +3,25 @@
 #include "Config.h"
 
 namespace Config {
-	bool BorderlessWindowed = true;
-	bool PatchOutDInput8 = true;
-	bool RemoveTelemetry = true;
-	bool SafeFPSCap = false;
-	bool FixVSync = true;
-	bool FixSubtitleScale = true;
-	bool SkipLandingCutscene = false;
-	bool SkipIntroToMainMenu = false;
-	bool SkipLoadingScreenDelay = false;
+
+	namespace Fixes {
+		bool VSync = true;
+		bool SubtitleScale = true;
+		bool LegacyDirectInput = true;
+		bool LoadingScreenDelay = false;
+		bool HighPrecisionTimer = true;
+	}
+
+	namespace Patches {
+		bool BorderlessWindow = true;
+		bool Telemetry = true;
+		bool IntroCutscene = false;
+		bool MainIntro = false;
+	}
+
+	namespace Features {
+		bool FrameRateCap = false;
+	}
 
 	//AI-written config handling: generates DeadSpaceFixes.ini on first launch
 	//(loading-screen-delay option below reverse engineered by AI, see dllmain.cpp).
@@ -48,6 +58,7 @@ namespace Config {
 			{ "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
 			{ "SkipIntroToMainMenu", 0, "Skip the boot intro and launch main menu immediately" },
 			{ "SkipLoadingScreenDelay", 0, "Skip the artificial wait on the loading screen once the level is ready" },
+			{ "UseHighPrecisionTimer", 1, "Use the high-precision timer instead of GetTickCount (helps at high framerates)" },
 		};
 
 		// Note: the game's config lives next to the .exe (the DLL runs from the
@@ -112,14 +123,19 @@ namespace Config {
 				EnsureKeyPresent(configPath, e);
 		}
 
-		BorderlessWindowed = GetPrivateProfileIntA(kSettingsSection, "BorderlessWindowed", 1, configPath.c_str()) != 0;
-		PatchOutDInput8 = GetPrivateProfileIntA(kSettingsSection, "PatchOutDInput8", 1, configPath.c_str()) != 0;
-		RemoveTelemetry = GetPrivateProfileIntA(kSettingsSection, "RemoveTelemetry", 1, configPath.c_str()) != 0;
-		FixVSync = GetPrivateProfileIntA(kSettingsSection, "FixVSync", 1, configPath.c_str()) != 0;
-		FixSubtitleScale = GetPrivateProfileIntA(kSettingsSection, "FixSubtitleScale", 1, configPath.c_str()) != 0;
-		SafeFPSCap = GetPrivateProfileIntA(kSettingsSection, "SafeFPSCap", 0, configPath.c_str()) != 0;
-		SkipLandingCutscene = GetPrivateProfileIntA(kSettingsSection, "SkipIshimuraLandingCutscene", 0, configPath.c_str()) != 0;
-		SkipIntroToMainMenu = GetPrivateProfileIntA(kSettingsSection, "SkipIntroToMainMenu", 0, configPath.c_str()) != 0;
-		SkipLoadingScreenDelay = GetPrivateProfileIntA(kSettingsSection, "SkipLoadingScreenDelay", 0, configPath.c_str()) != 0;
+		auto read = [&](const char* key, int def) {
+			return GetPrivateProfileIntA(kSettingsSection, key, def, configPath.c_str()) != 0;
+		};
+
+		Fixes::VSync = read("FixVSync", 1);
+		Fixes::SubtitleScale = read("FixSubtitleScale", 1);
+		Fixes::LegacyDirectInput = read("PatchOutDInput8", 1);
+		Fixes::LoadingScreenDelay = read("SkipLoadingScreenDelay", 0);
+		Fixes::HighPrecisionTimer = read("UseHighPrecisionTimer", 1);
+		Patches::BorderlessWindow = read("BorderlessWindowed", 1);
+		Patches::Telemetry = read("RemoveTelemetry", 1);
+		Patches::IntroCutscene = read("SkipIshimuraLandingCutscene", 0);
+		Patches::MainIntro = read("SkipIntroToMainMenu", 0);
+		Features::FrameRateCap = read("SafeFPSCap", 0);
 	}
 }

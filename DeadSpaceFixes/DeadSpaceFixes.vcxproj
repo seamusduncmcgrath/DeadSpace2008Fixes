@@ -79,7 +79,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -102,7 +102,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -123,7 +123,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -146,7 +146,7 @@
       <LanguageStandard>stdcpp20</LanguageStandard>
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>$(ProjectDir)\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -159,8 +159,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="common.h" />
     <ClInclude Include="Config.h" />
-    <ClInclude Include="framework.h" />
+    <ClInclude Include="Features\Features.h" />
+    <ClInclude Include="Features\Graphics\D3D9Device.h" />
+    <ClInclude Include="Fixes\Fixes.h" />
     <ClInclude Include="include\MinHook\buffer.h" />
     <ClInclude Include="include\MinHook\hde32.h" />
     <ClInclude Include="include\MinHook\MinHook.h" />
@@ -168,21 +171,32 @@
     <ClInclude Include="include\MinHook\table32.h" />
     <ClInclude Include="include\MinHook\trampoline.h" />
     <ClInclude Include="include\SDL3\SDL.h" />
-    <ClInclude Include="InputHooks.h" />
-    <ClInclude Include="TypeDefs.h" />
+    <ClInclude Include="Patches\Patches.h" />
     <ClInclude Include="Utils.h" />
-    <ClInclude Include="WindowHooks.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="Features\Graphics\AnisotropicFiltering.cpp" />
+    <ClCompile Include="Features\Graphics\D3D9Device.cpp" />
+    <ClCompile Include="Features\Graphics\FrameRateCap.cpp" />
+    <ClCompile Include="Features\Input\SdlGamepad.cpp" />
+    <ClCompile Include="Fixes\Graphics\SubtitleScale.cpp" />
+    <ClCompile Include="Fixes\Graphics\VSync.cpp" />
+    <ClCompile Include="Fixes\Input\LegacyDirectInput.cpp" />
+    <ClCompile Include="Fixes\Physics\Timer.cpp" />
+    <ClCompile Include="Fixes\Save\SafeStringHandling.cpp" />
+    <ClCompile Include="Fixes\UI\LoadingScreen.cpp" />
     <ClCompile Include="include\MinHook\buffer.c" />
     <ClCompile Include="include\MinHook\hde32.c" />
     <ClCompile Include="include\MinHook\hook.c" />
     <ClCompile Include="include\MinHook\trampoline.c" />
-    <ClCompile Include="InputHooks.cpp" />
+    <ClCompile Include="Patches\Gameplay\IntroCutscene.cpp" />
+    <ClCompile Include="Patches\System\BorderlessWindow.cpp" />
+    <ClCompile Include="Patches\System\Telemetry.cpp" />
+    <ClCompile Include="Patches\UI\MainIntro.cpp" />
+    <ClCompile Include="Patches\UI\VersionString.cpp" />
     <ClCompile Include="Utils.cpp" />
-    <ClCompile Include="WindowHooks.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="proxy.def" />
