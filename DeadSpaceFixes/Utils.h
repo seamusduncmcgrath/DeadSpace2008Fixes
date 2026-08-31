@@ -1,5 +1,7 @@
 #pragma once
 #include <Windows.h>
+#include <cstdio>
+#include <cstddef>
 
 #ifdef _DEBUG
 #define DEBUG_LOG(fmt, ...) printf("[DeadSpaceFixes] " fmt "\n", ##__VA_ARGS__)
