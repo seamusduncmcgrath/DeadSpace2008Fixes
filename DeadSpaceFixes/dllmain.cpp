@@ -46,7 +46,7 @@ namespace {
 		{
 			if (m.enabled())
 			{
-				DEBUG_LOG("Applying %s", m.name);
+				LOG_DEBUG("[MainThread]", "Applying %s", m.name);
 				m.apply();
 			}
 		}
@@ -78,7 +78,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 		//crashes, so this caps it to 8. (might work at 10? lots of people say the
 		//issue is with 10 or 8)
 		DWORD processorCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-		DEBUG_LOG("Core/Thread count is %d", processorCount);
+		LOG_INFO("[MainThread]", "Core/Thread count is %d", processorCount);
 		if (processorCount > 8)
 		{
 			DWORD_PTR affinityMask = 0xFF;

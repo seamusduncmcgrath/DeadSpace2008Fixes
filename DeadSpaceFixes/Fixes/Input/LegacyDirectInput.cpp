@@ -79,7 +79,7 @@ namespace Fixes {
 					if (MH_CreateHook(pUseDirectInputTarget, &hkShouldUseDirectInput, reinterpret_cast<LPVOID*>(&oShouldUseDirectInput)) == MH_OK)
 					{
 						MH_EnableHook(pUseDirectInputTarget);
-						DEBUG_LOG("Removed terrible controller API checker");
+						LOG_INFO("[Fixes/Input/LegacyDirectInput]", "Removed terrible controller API checker");
 					}
 				}
 			}

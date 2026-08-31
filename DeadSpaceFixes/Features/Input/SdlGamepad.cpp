@@ -21,7 +21,7 @@ namespace {
 	{
 		if (!SDL_Init(SDL_INIT_GAMEPAD))
 		{
-			DEBUG_LOG("SDL failed to init!");
+			LOG_ERROR("[Features/Input/SdlGamepad]", "SDL failed to init!");
 			return 1;
 		}
 
@@ -36,7 +36,7 @@ namespace {
 				{
 					g_CurrentGamepad = SDL_OpenGamepad(event.gdevice.which); //we open the controller plugged in here
 					const char* name = SDL_GetGamepadName(g_CurrentGamepad);
-					DEBUG_LOG("Controller connected: %s", name ? name : "Unknown");
+					LOG_INFO("[Features/Input/SdlGamepad]", "Controller connected: %s", name ? name : "Unknown");
 					SDL_SetGamepadLED(g_CurrentGamepad, 0, 255, 255); //idk i just like the leds kinda like issacs health bar
 				}
 			}

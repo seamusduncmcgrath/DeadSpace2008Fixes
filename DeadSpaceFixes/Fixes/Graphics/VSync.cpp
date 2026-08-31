@@ -42,7 +42,7 @@ namespace Fixes {
 				{
 					const BYTE disableCap = 0x00;
 					if (Utils::WriteBytes(vsyncmenuAddress, &disableCap, sizeof(disableCap)))
-						DEBUG_LOG("Patched vsync mode!");
+						LOG_INFO("[Fixes/Graphics/VSync]", "Patched vsync mode!");
 				}
 			}
 		}

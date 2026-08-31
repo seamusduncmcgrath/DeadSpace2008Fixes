@@ -9,6 +9,8 @@ namespace Fixes {
 
 			void Apply(HMODULE hExe)
 			{
+				static constexpr const char* kTag = "[Fixes/Physics/Timer]";
+
 				const char* timerSignature = "80 3D ? ? ? ? 00 74 15 8D 54 24 0C 52";
 				uintptr_t patternAddress = Utils::FindPattern(hExe, timerSignature);
 
@@ -20,7 +22,7 @@ namespace Fixes {
 				// QueryPerformanceCounter() would desync and drift on old AMD Athlon X2 CPUs.
 				if (patternAddress != 0)
 				{
-					DEBUG_LOG("Signature for high precision timer found at 0x%X", patternAddress);
+					LOG_DEBUG(kTag, "Signature for high precision timer found at 0x%X", patternAddress);
 					void* patchAddress = reinterpret_cast<void*>(patternAddress + 7);
 
 					DWORD oldProtect;
@@ -31,7 +33,7 @@ namespace Fixes {
 						pByte[1] = 0x90;
 
 						VirtualProtect(patchAddress, 2, oldProtect, &oldProtect);
-						DEBUG_LOG("Timer patched");
+						LOG_INFO(kTag, "Timer patched");
 					}
 				}
 			}

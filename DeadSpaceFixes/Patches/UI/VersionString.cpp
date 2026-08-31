@@ -15,8 +15,8 @@ namespace Patches {
 				if (versionAddress != 0)
 				{
 					char* pVersionString = *reinterpret_cast<char**>(versionAddress + 8);
-					DEBUG_LOG("Found version number at 0x%p", pVersionString);
-					DEBUG_LOG("Game version is %s", pVersionString);
+					LOG_DEBUG("[Patches/UI/VersionString]", "Found version number at 0x%p", pVersionString);
+					LOG_DEBUG("[Patches/UI/VersionString]", "Game version is %s", pVersionString);
 
 					const char* customVersion = "DeadSpaceFixes Installed!";
 
@@ -25,7 +25,7 @@ namespace Patches {
 					{
 						strcpy_s(pVersionString, 100, customVersion);
 						VirtualProtect(pVersionString, 100, oldProtect, &oldProtect);
-						DEBUG_LOG("Set custom game version string to %s", customVersion);
+						LOG_INFO("[Patches/UI/VersionString]", "Set custom game version string to %s", customVersion);
 					}
 				}
 			}

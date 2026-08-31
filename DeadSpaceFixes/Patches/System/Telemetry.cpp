@@ -36,7 +36,7 @@ namespace Patches {
 					{
 						MH_CreateHook(pWSAStartup, &hkWSAStartup, reinterpret_cast<LPVOID*>(&oWSAStartup));
 						MH_EnableHook(pWSAStartup);
-						DEBUG_LOG("WSAStartup hooked, all network/telemetry blocked");
+						LOG_INFO("[Patches/System/Telemetry]", "WSAStartup hooked, all network/telemetry blocked");
 					}
 				}
 				//some games don't properly load this so we LoadLibrary it
@@ -48,7 +48,7 @@ namespace Patches {
 					{
 						MH_CreateHook(pNetbios, &hkNetbios, reinterpret_cast<LPVOID*>(&oNetbios));
 						MH_EnableHook(pNetbios);
-						DEBUG_LOG("Netbios also hooked, weird NAT harvester is now blocked");
+						LOG_INFO("[Patches/System/Telemetry]", "Netbios also hooked, weird NAT harvester is now blocked");
 					}
 				}
 			}

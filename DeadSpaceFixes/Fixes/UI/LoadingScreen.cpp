@@ -32,11 +32,11 @@ namespace Fixes {
 				const char* loadingPreHoldSig = "F3 0F 10 46 14 0F 2F 80 B0 00 00 00 76 41 0F 57 C0";
 				uintptr_t loadingPreHold = Utils::FindPattern(hExe, loadingPreHoldSig);
 				if (loadingPreHold != 0) {
-					DEBUG_LOG("Found loading screen pre-tip hold at 0x%X", loadingPreHold + 5);
+					LOG_DEBUG("[Fixes/UI/LoadingScreen]", "Found loading screen pre-tip hold at 0x%X", loadingPreHold + 5);
 					BYTE patch[7] = { 0x0F, 0x2F, 0x05 };
 					*reinterpret_cast<uint32_t*>(patch + 3) = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&g_LoadingTipPreHold));
 					if (Utils::WriteBytes(loadingPreHold + 5, patch, sizeof(patch)))
-						DEBUG_LOG("Patched loading screen pre-tip hold to %.1fs", g_LoadingTipPreHold);
+						LOG_INFO("[Fixes/UI/LoadingScreen]", "Patched loading screen pre-tip hold to %.1fs", g_LoadingTipPreHold);
 				}
 
 				//The per-tip hold. Retarget to our
@@ -44,11 +44,11 @@ namespace Fixes {
 				const char* loadingCycleSig = "8B 56 28 0F 2F 82 B4 00 00 00 76 1A C7 46 24 04";
 				uintptr_t loadingCycle = Utils::FindPattern(hExe, loadingCycleSig);
 				if (loadingCycle != 0) {
-					DEBUG_LOG("Found loading screen tip cycle hold at 0x%X", loadingCycle + 3);
+					LOG_DEBUG("[Fixes/UI/LoadingScreen]", "Found loading screen tip cycle hold at 0x%X", loadingCycle + 3);
 					BYTE patch[7] = { 0x0F, 0x2F, 0x05 };
 					*reinterpret_cast<uint32_t*>(patch + 3) = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(&g_LoadingTipCycleHold));
 					if (Utils::WriteBytes(loadingCycle + 3, patch, sizeof(patch)))
-						DEBUG_LOG("Patched loading screen tip cycle hold to %.1fs", g_LoadingTipCycleHold);
+						LOG_INFO("[Fixes/UI/LoadingScreen]", "Patched loading screen tip cycle hold to %.1fs", g_LoadingTipCycleHold);
 				}
 			}
 		}

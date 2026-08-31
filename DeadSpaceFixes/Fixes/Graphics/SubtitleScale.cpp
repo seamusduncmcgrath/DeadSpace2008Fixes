@@ -118,7 +118,7 @@ namespace Fixes {
 
 				if (subtitleAddres != 0)
 				{
-					DEBUG_LOG("Hooked subtitle settings at 0x%X", subtitleAddres);
+					LOG_INFO("[Fixes/Graphics/SubtitleScale]", "Hooked subtitle settings at 0x%X", subtitleAddres);
 					MH_CreateHook(reinterpret_cast<void*>(subtitleAddres), &hkSubtitleSettings, &oSubtitleSettings);
 					MH_EnableHook(reinterpret_cast<void*>(subtitleAddres));
 				}

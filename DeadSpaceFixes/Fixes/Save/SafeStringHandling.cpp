@@ -26,17 +26,19 @@ namespace Fixes {
 
 			void Apply(HMODULE hExe)
 			{
+				static constexpr const char* kTag = "[Fixes/Save/SafeStringHandling]";
+
 				const char* saveStringSignature = "8B 44 24 08 85 C0 74 14 50 8B 44 24 08 68 80 00"; //credit to marker patch for this
 				uintptr_t saveStringAddress = Utils::FindPattern(hExe, saveStringSignature);
 				if (saveStringAddress != 0)
 				{
 					void* pSaveCopyTarget = reinterpret_cast<void*>(saveStringAddress);
-					DEBUG_LOG("Found save string handling at 0x%p", pSaveCopyTarget);
+					LOG_DEBUG(kTag, "Found save string handling at 0x%p", pSaveCopyTarget);
 
 					if (MH_CreateHook(pSaveCopyTarget, &hkSaveStringCopy, reinterpret_cast<LPVOID*>(&oSaveStringCopy)) == MH_OK)
 					{
 						MH_EnableHook(pSaveCopyTarget);
-						DEBUG_LOG("Save string handling hooked, should be safer");
+						LOG_INFO(kTag, "Save string handling hooked, should be safer");
 					}
 				}
 			}

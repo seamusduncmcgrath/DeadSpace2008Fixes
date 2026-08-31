@@ -23,9 +23,9 @@ namespace Patches {
 					{
 						const char* landingSeenName = "XCENTKOWSK_C78C369_F71988A_v3";
 						if (Utils::WriteBytes(checkpointNameAddress, landingSeenName, 29))
-							DEBUG_LOG("Skipped intro!");
+							LOG_INFO("[Patches/Gameplay/IntroCutscene]", "Skipped intro!");
 						else
-							DEBUG_LOG("Failed to skip intro!");
+							LOG_WARN("[Patches/Gameplay/IntroCutscene]", "Failed to skip intro!");
 					}
 				}
 			}
@@ -69,11 +69,11 @@ namespace Patches {
 							reinterpret_cast<LPVOID*>(&oCreateCheckpointRecord)) == MH_OK &&
 							MH_EnableHook(reinterpret_cast<void*>(ngPlusAddress)) == MH_OK)
 						{
-							DEBUG_LOG("NG+ landing cutscene skip hooked at 0x%X", ngPlusAddress);
+							LOG_INFO("[Patches/Gameplay/IntroCutscene]", "NG+ landing cutscene skip hooked at 0x%X", ngPlusAddress);
 						}
 						else
 						{
-							DEBUG_LOG("Failed to hook NG+ landing cutscene skip");
+							LOG_WARN("[Patches/Gameplay/IntroCutscene]", "Failed to hook NG+ landing cutscene skip");
 						}
 					}
 				}
