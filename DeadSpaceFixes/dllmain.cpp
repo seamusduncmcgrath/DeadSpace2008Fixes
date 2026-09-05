@@ -51,6 +51,20 @@ namespace {
 			}
 		}
 	}
+
+	// CPU affinity fix: on DS1 a CPU with more than 8 cores/threads can crash
+	// the game, so cap the process to the first 8 processors when the machine
+	// has more. Runs from DllMain before any module applies.
+	void ApplyCpuAffinityFix()
+	{
+		DWORD processorCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
+		LOG_INFO("[MainThread]", "Core/Thread count is %d", processorCount);
+		if (processorCount > 8)
+		{
+			DWORD_PTR affinityMask = 0xFF;
+			SetProcessAffinityMask(GetCurrentProcess(), affinityMask);
+		}
+	}
 }
 
 DWORD WINAPI MainThread(LPVOID)
@@ -74,16 +88,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	{
 		DisableThreadLibraryCalls(hModule);
 
-		//CPU affinity fix: on DS1 if the CPU core/thread count is above 8 it causes
-		//crashes, so this caps it to 8. (might work at 10? lots of people say the
-		//issue is with 10 or 8)
-		DWORD processorCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);
-		LOG_INFO("[MainThread]", "Core/Thread count is %d", processorCount);
-		if (processorCount > 8)
-		{
-			DWORD_PTR affinityMask = 0xFF;
-			SetProcessAffinityMask(GetCurrentProcess(), affinityMask);
-		}
+		ApplyCpuAffinityFix();
 
 		Config::Load();
 
