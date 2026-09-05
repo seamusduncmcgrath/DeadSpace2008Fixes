@@ -11,18 +11,40 @@ namespace Features {
 
 			IDirect3DDevice9* g_DummyDevice = nullptr;
 
+			namespace {
+
+				const wchar_t* const kHelperClass = L"DeadSpaceFixesHelperWnd";
+				HWND g_HelperWindow = nullptr;
+
+				// A private, hidden top-level window used only as the focus/device
+				// window when creating the dummy IDirect3DDevice9. Its sole purpose is
+				// to hand us the D3D9 device vtable, and any valid HWND works — no need
+				// to wait for (or depend on) the game's own window. Registered once,
+				// created lazily.
+				HWND GetHelperWindow()
+				{
+					if (g_HelperWindow)
+						return g_HelperWindow;
+
+					HINSTANCE instance = GetModuleHandleA(nullptr);
+					WNDCLASSW wc = {};
+					wc.lpfnWndProc = DefWindowProcW;
+					wc.hInstance = instance;
+					wc.lpszClassName = kHelperClass;
+					RegisterClassW(&wc);
+
+					g_HelperWindow = CreateWindowExW(0, kHelperClass, L"DeadSpaceFixes helper window",
+						WS_POPUP, 0, 0, 8, 8, nullptr, nullptr, instance, nullptr);
+					return g_HelperWindow;
+				}
+			}
+
 			IDirect3DDevice9* CreateDummyDevice()
 			{
 				if (g_DummyDevice)
 					return g_DummyDevice;
 
-				//wait for the game window to exist before creating the device
-				HWND hwnd = nullptr;
-				while (!hwnd) // todo: use window creation hook instead so this function could be used anywhere in order.
-				{
-					hwnd = FindWindowA("DeadSpaceWndClass", nullptr);
-					Sleep(100);
-				}
+				HWND hwnd = GetHelperWindow();
 
 				IDirect3D9* pD3D = Direct3DCreate9(D3D_SDK_VERSION);
 				if (!pD3D) return nullptr;
@@ -48,9 +70,11 @@ namespace Features {
 				}
 			}
 
-			//Installs every D3D9 device-hook feature. Waits for the game window, steals
-			//the device vtable and attaches the hooks. Make sure to run it last, as it
-			//blocks until the window is created.
+			//Installs every D3D9 device-hook feature. Creates a transient dummy device on
+			//a private hidden helper window to steal the device vtable and attach the
+			//hooks; because all IDirect3DDevice9 instances share that vtable, the game's
+			//own device gets the hooks regardless of when this runs, so it can be applied
+			//anywhere and never blocks.
 			void InstallDeviceHooks()
 			{
 				IDirect3DDevice9* dummy = CreateDummyDevice();
