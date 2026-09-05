@@ -172,6 +172,7 @@
     <ClInclude Include="include\MinHook\trampoline.h" />
     <ClInclude Include="include\SDL3\SDL.h" />
     <ClInclude Include="Patches\Patches.h" />
+    <ClInclude Include="Log.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
   <ItemGroup>
@@ -196,6 +197,7 @@
     <ClCompile Include="Patches\System\Telemetry.cpp" />
     <ClCompile Include="Patches\UI\MainIntro.cpp" />
     <ClCompile Include="Patches\UI\VersionString.cpp" />
+    <ClCompile Include="Log.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
