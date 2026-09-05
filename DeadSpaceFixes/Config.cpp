@@ -26,9 +26,10 @@ namespace Config {
 
 	//config handling: generates DeadSpaceFixes.ini on first launch
 	//(with human-readable help comments above each key), and "heals" an
-	//existing file by re-adding any keys that a newer build introduced. This
-	//replaces the old behaviour of silently reading defaults for unknown keys,
-	//so the .ini always stays complete and self-documenting.
+	//existing file by re-adding any keys that a newer build introduced —
+	//complete with their help comments. This replaces the old behaviour of
+	//silently reading defaults for unknown keys, so the .ini always stays
+	//complete and self-documenting.
 	namespace {
 		constexpr const char* kIniName = "DeadSpaceFixes.ini";
 		// The .ini groups keys into the same categories as the C++ Config
@@ -108,9 +109,11 @@ namespace Config {
 					}
 					currentSection = e.section;
 				}
-				buffer += "; ";
-				buffer += e.help;
-				buffer += '\0';
+				if (e.help) {
+					buffer += "; ";
+					buffer += e.help;
+					buffer += '\0';
+				}
 				buffer += e.key;
 				buffer += "=";
 				buffer += e.def ? "1" : "0";
@@ -132,6 +135,79 @@ namespace Config {
 			DWORD n = GetPrivateProfileStringA(e.section, e.key, kMissing, value, sizeof(value), path.c_str());
 			if (n == 1 && value[0] == kMissing[0])
 				WritePrivateProfileStringA(e.section, e.key, e.def ? "1" : "0", path.c_str());
+		}
+
+		// The profile API reads and writes key/value pairs but never comments, so
+		// comment presence is checked by scanning the raw file text. Used to work
+		// out whether a section needs regenerating after migrate/heal added bare
+		// keys (below).
+		std::string ReadFileText(const std::string& path) {
+			HANDLE h = CreateFileA(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr,
+				OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+			if (h == INVALID_HANDLE_VALUE)
+				return std::string();
+
+			std::string text;
+			DWORD size = GetFileSize(h, nullptr);
+			if (size != INVALID_FILE_SIZE && size > 0) {
+				text.resize(size);
+				DWORD read = 0;
+				if (!ReadFile(h, &text[0], size, &read, nullptr))
+					text.clear();
+				else
+					text.resize(read);
+			}
+			CloseHandle(h);
+			return text;
+		}
+
+		// Regenerate one section with a "; help" line above every key, taking the
+		// current on-disk values so user-set ones survive. Only called when the
+		// section is missing a comment, so a fully self-documenting file (with any
+		// manual edits) is left untouched.
+		void HealCommentsInSection(const std::string& path, const char* section) {
+			std::string buffer;
+			for (const Entry& e : kEntries) {
+				if (e.section != section)
+					continue;
+				char value[8] = { 0 };
+				GetPrivateProfileStringA(section, e.key, e.def ? "1" : "0", value, sizeof(value), path.c_str());
+				if (e.help) {
+					buffer += "; ";
+					buffer += e.help;
+					buffer += '\0';
+				}
+				buffer += e.key;
+				buffer += "=";
+				buffer += value;
+				buffer += '\0';
+			}
+			if (!buffer.empty()) {
+				buffer += '\0';
+				WritePrivateProfileSectionA(section, buffer.c_str(), path.c_str());
+			}
+		}
+
+		// "Heal comments too": WriteDefaultConfig emits full sections with "; help"
+		// lines, but the migrate/heal paths add bare key=value lines via the profile
+		// API, so those can end up without their help comment. Whenever any entry of
+		// a section is found to be missing its comment, regenerate that section.
+		void EnsureCommentsPresent(const std::string& path) {
+			std::string text = ReadFileText(path);
+			if (text.empty())
+				return;
+
+			const char* healed = nullptr;
+			for (const Entry& e : kEntries) {
+				if (e.help && e.section != healed) {
+					std::string needle = "; ";
+					needle += e.help;
+					if (text.find(needle) == std::string::npos) {
+						HealCommentsInSection(path, e.section);
+						healed = e.section;
+					}
+				}
+			}
 		}
 
 		// Upgrade path for files written by builds older than the grouped
@@ -173,6 +249,7 @@ namespace Config {
 			MigrateLegacyConfig(configPath);
 			for (const Entry& e : kEntries)
 				EnsureKeyPresent(configPath, e);
+			EnsureCommentsPresent(configPath);
 		}
 
 		auto read = [&](const char* section, const char* key, int def) {
