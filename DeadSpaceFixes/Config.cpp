@@ -1,6 +1,7 @@
 #include <Windows.h>
 #include <string>
 #include "Config.h"
+#include "Utils.h"
 
 namespace Config {
 
@@ -23,42 +24,53 @@ namespace Config {
 		bool FrameRateCap = false;
 	}
 
-	//AI-written config handling: generates DeadSpaceFixes.ini on first launch
-	//(loading-screen-delay option below reverse engineered by AI, see dllmain.cpp).
+	//config handling: generates DeadSpaceFixes.ini on first launch
 	//(with human-readable help comments above each key), and "heals" an
 	//existing file by re-adding any keys that a newer build introduced. This
 	//replaces the old behaviour of silently reading defaults for unknown keys,
 	//so the .ini always stays complete and self-documenting.
 	namespace {
 		constexpr const char* kIniName = "DeadSpaceFixes.ini";
-		constexpr const char* kSettingsSection = "Settings";
+		// The .ini groups keys into the same categories as the C++ Config
+		// namespaces: [Fixes], [Patches] and [Features]. Each known option is
+		// declared once here with its section, so the default, the help text and
+		// the read/write logic can't drift apart.
+		constexpr const char* kFixesSection = "Fixes";
+		constexpr const char* kPatchesSection = "Patches";
+		constexpr const char* kFeaturesSection = "Features";
 		constexpr const char* kInfoSection = "Info";
 		constexpr const char* kVersionKey = "ConfigVersion";
-		// Bump this whenever the [Settings] key set changes. A stale config file
+		// Pre-v3 builds wrote every key under one flat [Settings] section; the
+		// option names never changed, only their grouping. MigrateLegacyConfig
+		// carries any user-set values over to the grouped sections.
+		constexpr const char* kLegacySection = "Settings";
+		// Bump this whenever the config key set changes. A stale config file
 		// is then regenerated with the canonical keys instead of silently
 		// dropping options the current build doesn't know about.
-		constexpr int kConfigVersion = 2;
+		constexpr int kConfigVersion = 3;
 
 		// Every known option is declared here once and used everywhere below,
 		// so the default, the help text and the read/write logic can't drift
-		// apart. "help" becomes a "; comment" line above the key in the .ini.
+		// apart. "help" becomes a "; comment" line above the key in the .ini
+		// (unless nullptr, for keys that are self-explanatory).
 		struct Entry {
+			const char* section;
 			const char* key;
 			int def;
 			const char* help;
 		};
 
 		const Entry kEntries[] = {
-			{ "BorderlessWindowed", 1, "Run the game in a borderless window instead of fullscreen" },
-			{ "PatchOutDInput8", 1, "Patch out the game's DInput8 DLL usage" },
-			{ "RemoveTelemetry", 1, "Disable the game's telemetry/data collection" },
-			{ "FixVSync", 1, "Fix vsync behaviour" },
-			{ "FixSubtitleScale", 1, "Fix subtitle scaling" },
-			{ "SafeFPSCap", 0, "Cap the framerate to avoid physics/script issues" },
-			{ "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
-			{ "SkipIntroToMainMenu", 0, "Skip the boot intro and launch main menu immediately" },
-			{ "SkipLoadingScreenDelay", 0, "Skip the artificial wait on the loading screen once the level is ready" },
-			{ "UseHighPrecisionTimer", 1, "Use the high-precision timer instead of GetTickCount (helps at high framerates)" },
+			{ kFixesSection,   "FixVSync", 1, "Fix vsync behaviour" },
+			{ kFixesSection,   "FixSubtitleScale", 1, "Fix subtitle scaling" },
+			{ kFixesSection,   "PatchOutDInput8", 1, "Patch out the game's DInput8 DLL usage" },
+			{ kFixesSection,   "UseHighPrecisionTimer", 1, "Use the high-precision timer instead of GetTickCount (helps at high framerates)" },
+			{ kFixesSection,   "SkipLoadingScreenDelay", 0, "Skip the artificial wait on the loading screen once the level is ready" },
+			{ kPatchesSection, "BorderlessWindowed", 1, "Run the game in a borderless window instead of fullscreen" },
+			{ kPatchesSection, "RemoveTelemetry", 1, "Disable the game's telemetry/data collection" },
+			{ kPatchesSection, "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
+			{ kPatchesSection, "SkipIntroToMainMenu", 0, "Skip the boot intro and launch main menu immediately" },
+			{ kFeaturesSection, "SafeFPSCap", 0, "Cap the framerate to avoid physics/script issues" },
 		};
 
 		// Note: the game's config lives next to the .exe (the DLL runs from the
@@ -79,22 +91,35 @@ namespace Config {
 		// First run: write a fresh .ini. Each key is preceded by a "; help"
 		// line so users know what it does. The [Info] section records the
 		// config schema version so a future update can detect stale files.
+		// Keys are emitted one section at a time, in entry order, so the file
+		// reads top-to-bottom as [Fixes] then [Patches] then [Features].
 		void WriteDefaultConfig(const std::string& path) {
 			WritePrivateProfileStringA(kInfoSection, kVersionKey,
 				std::to_string(kConfigVersion).c_str(), path.c_str());
 
-			std::string section;
+			const char* currentSection = nullptr;
+			std::string buffer;
 			for (const Entry& e : kEntries) {
-				section += "; ";
-				section += e.help;
-				section += '\0';
-				section += e.key;
-				section += "=";
-				section += e.def ? "1" : "0";
-				section += '\0';
+				if (e.section != currentSection) {
+					if (!buffer.empty()) {
+						buffer += '\0';
+						WritePrivateProfileSectionA(currentSection, buffer.c_str(), path.c_str());
+						buffer.clear();
+					}
+					currentSection = e.section;
+				}
+				buffer += "; ";
+				buffer += e.help;
+				buffer += '\0';
+				buffer += e.key;
+				buffer += "=";
+				buffer += e.def ? "1" : "0";
+				buffer += '\0';
 			}
-			section += '\0';
-			WritePrivateProfileSectionA(kSettingsSection, section.c_str(), path.c_str());
+			if (!buffer.empty()) {
+				buffer += '\0';
+				WritePrivateProfileSectionA(currentSection, buffer.c_str(), path.c_str());
+			}
 		}
 
 		// Self-heal: if a key is absent from an existing .ini, WritePrivateProfile
@@ -104,38 +129,65 @@ namespace Config {
 		void EnsureKeyPresent(const std::string& path, const Entry& e) {
 			char value[8] = { 0 };
 			constexpr char kMissing[] = "\x01";
-			DWORD n = GetPrivateProfileStringA(kSettingsSection, e.key, kMissing, value, sizeof(value), path.c_str());
+			DWORD n = GetPrivateProfileStringA(e.section, e.key, kMissing, value, sizeof(value), path.c_str());
 			if (n == 1 && value[0] == kMissing[0])
-				WritePrivateProfileStringA(kSettingsSection, e.key, e.def ? "1" : "0", path.c_str());
+				WritePrivateProfileStringA(e.section, e.key, e.def ? "1" : "0", path.c_str());
+		}
+
+		// Upgrade path for files written by builds older than the grouped
+		// sections: the key names are identical, they just all lived in one
+		// [Settings] section. Preserve whatever the user set (only touch keys
+		// that actually exist in the legacy section), then drop the empty
+		// legacy section and stamp the new schema version. Idempotent: a
+		// current-format file has no [Settings] section, so it's a no-op.
+		void MigrateLegacyConfig(const std::string& path) {
+			constexpr char kMissing[] = "\x01";
+			bool any = false;
+			for (const Entry& e : kEntries) {
+				char value[8] = { 0 };
+				DWORD n = GetPrivateProfileStringA(kLegacySection, e.key, kMissing, value, sizeof(value), path.c_str());
+				if (n != 0 && !(n == 1 && value[0] == kMissing[0])) {
+					WritePrivateProfileStringA(e.section, e.key, value, path.c_str());
+					any = true;
+				}
+			}
+			if (any) {
+				WritePrivateProfileSectionA(kLegacySection, nullptr, path.c_str());
+				WritePrivateProfileStringA(kInfoSection, kVersionKey,
+					std::to_string(kConfigVersion).c_str(), path.c_str());
+				LOG_INFO("[Config]", "Migrated legacy [Settings] config keys to grouped sections");
+			}
 		}
 	}
 
 	void Load() {
 		std::string configPath = GetConfigPath();
 
-		// Generate the .ini on first run, otherwise heal any keys that newer
-		// builds added. After either step the file is guaranteed complete.
+		// Generate the .ini on first run, otherwise migrate any pre-grouping
+		// [Settings] keys and heal keys newer builds added. After either step
+		// the file is guaranteed complete in the current format.
 		if (GetFileAttributesA(configPath.c_str()) == INVALID_FILE_ATTRIBUTES) {
 			WriteDefaultConfig(configPath);
 		}
 		else {
+			MigrateLegacyConfig(configPath);
 			for (const Entry& e : kEntries)
 				EnsureKeyPresent(configPath, e);
 		}
 
-		auto read = [&](const char* key, int def) {
-			return GetPrivateProfileIntA(kSettingsSection, key, def, configPath.c_str()) != 0;
+		auto read = [&](const char* section, const char* key, int def) {
+			return GetPrivateProfileIntA(section, key, def, configPath.c_str()) != 0;
 		};
 
-		Fixes::VSync = read("FixVSync", 1);
-		Fixes::SubtitleScale = read("FixSubtitleScale", 1);
-		Fixes::LegacyDirectInput = read("PatchOutDInput8", 1);
-		Fixes::LoadingScreenDelay = read("SkipLoadingScreenDelay", 0);
-		Fixes::HighPrecisionTimer = read("UseHighPrecisionTimer", 1);
-		Patches::BorderlessWindow = read("BorderlessWindowed", 1);
-		Patches::Telemetry = read("RemoveTelemetry", 1);
-		Patches::IntroCutscene = read("SkipIshimuraLandingCutscene", 0);
-		Patches::MainIntro = read("SkipIntroToMainMenu", 0);
-		Features::FrameRateCap = read("SafeFPSCap", 0);
+		Fixes::VSync = read(kFixesSection, "FixVSync", 1);
+		Fixes::SubtitleScale = read(kFixesSection, "FixSubtitleScale", 1);
+		Fixes::LegacyDirectInput = read(kFixesSection, "PatchOutDInput8", 1);
+		Fixes::LoadingScreenDelay = read(kFixesSection, "SkipLoadingScreenDelay", 0);
+		Fixes::HighPrecisionTimer = read(kFixesSection, "UseHighPrecisionTimer", 1);
+		Patches::BorderlessWindow = read(kPatchesSection, "BorderlessWindowed", 1);
+		Patches::Telemetry = read(kPatchesSection, "RemoveTelemetry", 1);
+		Patches::IntroCutscene = read(kPatchesSection, "SkipIshimuraLandingCutscene", 0);
+		Patches::MainIntro = read(kPatchesSection, "SkipIntroToMainMenu", 0);
+		Features::FrameRateCap = read(kFeaturesSection, "SafeFPSCap", 0);
 	}
 }
