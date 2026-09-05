@@ -107,23 +107,26 @@ extern "C" DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState)
 		pState->dwPacketNumber = s_PacketNumber++;
 
 		//map the buttons
+		// SDL's south/east/west/north convention maps to cross/circle/square/triangle.
+		static constexpr struct { SDL_GamepadButton sdl; WORD xinput; } kButtonMap[] = {
+			{ SDL_GAMEPAD_BUTTON_SOUTH,         XINPUT_GAMEPAD_A },
+			{ SDL_GAMEPAD_BUTTON_EAST,          XINPUT_GAMEPAD_B },
+			{ SDL_GAMEPAD_BUTTON_WEST,          XINPUT_GAMEPAD_X },
+			{ SDL_GAMEPAD_BUTTON_NORTH,         XINPUT_GAMEPAD_Y },
+			{ SDL_GAMEPAD_BUTTON_DPAD_UP,       XINPUT_GAMEPAD_DPAD_UP },
+			{ SDL_GAMEPAD_BUTTON_DPAD_DOWN,     XINPUT_GAMEPAD_DPAD_DOWN },
+			{ SDL_GAMEPAD_BUTTON_DPAD_LEFT,     XINPUT_GAMEPAD_DPAD_LEFT },
+			{ SDL_GAMEPAD_BUTTON_DPAD_RIGHT,    XINPUT_GAMEPAD_DPAD_RIGHT },
+			{ SDL_GAMEPAD_BUTTON_LEFT_SHOULDER,  XINPUT_GAMEPAD_LEFT_SHOULDER },  //L1
+			{ SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER, XINPUT_GAMEPAD_RIGHT_SHOULDER },  //R1
+			{ SDL_GAMEPAD_BUTTON_START,          XINPUT_GAMEPAD_START },  //options/plus
+			{ SDL_GAMEPAD_BUTTON_LEFT_STICK,    XINPUT_GAMEPAD_LEFT_THUMB },  //L3
+			{ SDL_GAMEPAD_BUTTON_RIGHT_STICK,   XINPUT_GAMEPAD_RIGHT_THUMB },  //R3
+		};
 		WORD buttons = 0;
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_SOUTH)) buttons |= XINPUT_GAMEPAD_A; //cross/b
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_EAST))  buttons |= XINPUT_GAMEPAD_B; //circle/a
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_WEST))  buttons |= XINPUT_GAMEPAD_X; //square/y
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_NORTH)) buttons |= XINPUT_GAMEPAD_Y; //triangle/x
-
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_UP))    buttons |= XINPUT_GAMEPAD_DPAD_UP;
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_DOWN))  buttons |= XINPUT_GAMEPAD_DPAD_DOWN;
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_LEFT))  buttons |= XINPUT_GAMEPAD_DPAD_LEFT;
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_DPAD_RIGHT)) buttons |= XINPUT_GAMEPAD_DPAD_RIGHT;
-
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_LEFT_SHOULDER))  buttons |= XINPUT_GAMEPAD_LEFT_SHOULDER; //L1
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_RIGHT_SHOULDER)) buttons |= XINPUT_GAMEPAD_RIGHT_SHOULDER; //R1
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_START)) buttons |= XINPUT_GAMEPAD_START; //options/plus
-
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_LEFT_STICK))  buttons |= XINPUT_GAMEPAD_LEFT_THUMB;  // L3 / left stick click, nearlly forgot about these
-		if (SDL_GetGamepadButton(g_CurrentGamepad, SDL_GAMEPAD_BUTTON_RIGHT_STICK)) buttons |= XINPUT_GAMEPAD_RIGHT_THUMB; // R3 / right stick click
+		for (const auto& b : kButtonMap)
+			if (SDL_GetGamepadButton(g_CurrentGamepad, b.sdl))
+				buttons |= b.xinput;
 
 		pState->Gamepad.wButtons = buttons;
 
