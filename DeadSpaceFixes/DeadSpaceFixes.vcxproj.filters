@@ -22,21 +22,33 @@
     <Filter Include="Header Files\SDL3">
       <UniqueIdentifier>{f4774618-4d5a-4e46-9751-b615d7295bf5}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Fixes">
+      <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F11111111111}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Patches">
+      <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F22222222222}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Features">
+      <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F33333333333}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Fixes">
+      <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F44444444444}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Patches">
+      <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F45555555555}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Features">
+      <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F46666666666}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="framework.h">
+    <ClInclude Include="common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="TypeDefs.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="WindowHooks.h">
+    <ClInclude Include="Log.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Utils.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="InputHooks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\MinHook\buffer.h">
@@ -63,18 +75,27 @@
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Fixes\Fixes.h">
+      <Filter>Header Files\Fixes</Filter>
+    </ClInclude>
+    <ClInclude Include="Patches\Patches.h">
+      <Filter>Header Files\Patches</Filter>
+    </ClInclude>
+    <ClInclude Include="Features\Features.h">
+      <Filter>Header Files\Features</Filter>
+    </ClInclude>
+    <ClInclude Include="Features\Graphics\D3D9Device.h">
+      <Filter>Header Files\Features</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="WindowHooks.cpp">
+    <ClCompile Include="Log.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Utils.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="InputHooks.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="include\MinHook\buffer.c">
@@ -91,6 +112,51 @@
     </ClCompile>
     <ClCompile Include="Config.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Fixes\Physics\Timer.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="Fixes\Graphics\VSync.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="Fixes\Graphics\SubtitleScale.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="Fixes\UI\LoadingScreen.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="Fixes\Input\LegacyDirectInput.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="Fixes\Save\SafeStringHandling.cpp">
+      <Filter>Source Files\Fixes</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\Gameplay\IntroCutscene.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\UI\MainIntro.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\UI\VersionString.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\System\BorderlessWindow.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\System\Telemetry.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Input\SdlGamepad.cpp">
+      <Filter>Source Files\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Graphics\AnisotropicFiltering.cpp">
+      <Filter>Source Files\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Graphics\FrameRateCap.cpp">
+      <Filter>Source Files\Features</Filter>
+    </ClCompile>
+    <ClCompile Include="Features\Graphics\D3D9Device.cpp">
+      <Filter>Source Files\Features</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

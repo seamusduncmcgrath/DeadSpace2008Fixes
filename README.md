@@ -105,6 +105,8 @@ SkipIshimuraLandingCutscene=0
 SkipIntroToMainMenu=0
 ;Skips the artificial wait on the loading screen once the level is ready on new game
 SkipLoadingScreenDelay=0
+;Uses the high-precision timer instead of GetTickCount (helps at high framerates)
+UseHighPrecisionTimer=1
 ```
 
 ## Credits
