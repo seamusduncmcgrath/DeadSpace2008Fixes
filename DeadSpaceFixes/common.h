@@ -1,11 +1,6 @@
 #pragma once
 
-// Common definitions shared by every source file in this project.
-// Include this instead of assembling Windows/SDL/MinHook includes by hand.
-// Project root is on the include path, so all files can just `#include "common.h"`.
 
-
-// ---- Common preprocessor defines ----
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
 #endif
@@ -16,7 +11,6 @@
 #define NOMINMAX
 #endif
 
-// ---- Windows / DirectX includes ----
 #include <Windows.h>
 #include <winsock2.h>
 #include <nb30.h>
@@ -26,18 +20,12 @@
 #include <cstdint>
 #include <cstring>
 
-// ---- Third party: must come after system headers ----
 #pragma warning(push)
 #pragma warning(disable: 26812)
 #include "MinHook\MinHook.h"
 #pragma warning(pop)
 #include "SDL3\SDL.h"
 
-
-// ---- XINPUT definitions ----
-// The game loads the real xinput1_3.dll, and this DLL proxies it, so we can't
-// link against the SDK's xinput.h. These are the type/constant definitions we
-// need, kept self-contained so nothing else has to provide them.
 
 #define XINPUT_DEVTYPE_GAMEPAD          0x01
 #define XINPUT_DEVSUBTYPE_GAMEPAD       0x01
@@ -121,9 +109,6 @@ typedef DWORD(WINAPI* XInputGetCapabilities_t)(DWORD dwUserIndex, DWORD dwFlags,
 
 typedef HWND(WINAPI* GetForegroundWindow_t)();
 
-
-// ---- Exported proxy functions (from the .def file) ----
-// Declared here so SdlGamepad.cpp can define them and nothing else redefines them.
 extern "C" DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState);
 extern "C" DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration);
 extern "C" DWORD WINAPI XInputGetCapabilities(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities);

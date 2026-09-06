@@ -4,9 +4,6 @@
 
 #include "Log.h"
 
-// Pattern/search/write helpers used across the fixes, plus the leveled LOG_*
-// macros from Log.h. Logging lives in its own file so Utils.h stays about
-// memory work and nothing else.
 namespace Utils {
 
 	uintptr_t FindPattern(HMODULE hModule, const char* signature);

@@ -18,10 +18,6 @@ namespace {
 		std::function<void()> apply;
 	};
 
-	// Ordered: fixes and patches first, then the D3D9 device-hook feature last
-	// (it waits for the game window and steals the device vtable, so nothing
-	// after it can run). All Apply()s that search the main exe share one hExe,
-	// resolved here and captured into their thunk.
 	void ApplyAllModules()
 	{
 		HMODULE hExe = GetModuleHandleA(nullptr);
@@ -52,9 +48,7 @@ namespace {
 		}
 	}
 
-	// CPU affinity fix: on DS1 a CPU with more than 8 cores/threads can crash
-	// the game, so cap the process to the first 8 processors when the machine
-	// has more. Runs from DllMain before any module applies.
+	//on DS1 if the CPU core/thread count is above 8 it causes crashes, so this caps it to 8
 	void ApplyCpuAffinityFix()
 	{
 		DWORD processorCount = GetActiveProcessorCount(ALL_PROCESSOR_GROUPS);

@@ -1,9 +1,5 @@
 #pragma once
 
-// Behaviour-modifying patches: change how existing game features behave without
-// adding brand-new capability. Each patch is a self-contained .cpp file (listed
-// in the project) exposing a single `Apply(HMODULE)` entry point declared here.
-
 #include <Windows.h>
 
 namespace Patches {

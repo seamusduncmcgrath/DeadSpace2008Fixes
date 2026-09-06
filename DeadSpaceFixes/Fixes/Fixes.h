@@ -1,9 +1,5 @@
 #pragma once
 
-// Bug-fix patches: correct broken or incorrect engine behaviour.
-// Each fix is a self-contained .cpp file (listed in the project) exposing a
-// single `Apply(HMODULE)` entry point declared here.
-
 #include <Windows.h>
 
 namespace Fixes {
