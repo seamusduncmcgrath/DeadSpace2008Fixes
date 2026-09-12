@@ -193,6 +193,7 @@
     <ClCompile Include="include\MinHook\hook.c" />
     <ClCompile Include="include\MinHook\trampoline.c" />
     <ClCompile Include="Patches\Gameplay\IntroCutscene.cpp" />
+    <ClCompile Include="Patches\Gameplay\SkipVideos.cpp" />
     <ClCompile Include="Patches\System\BorderlessWindow.cpp" />
     <ClCompile Include="Patches\System\Telemetry.cpp" />
     <ClCompile Include="Patches\UI\MainIntro.cpp" />

@@ -15,6 +15,7 @@ namespace Config {
 		extern bool Telemetry;         // RemoveTelemetry
 		extern bool IntroCutscene;     // SkipIshimuraLandingCutscene
 		extern bool MainIntro;         // SkipIntroToMainMenu
+		extern bool SkipVideos;        // SkipLoreVideos
 	}
 
 	namespace Features {

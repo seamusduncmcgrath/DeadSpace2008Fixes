@@ -31,6 +31,7 @@ namespace {
 			{ "Fixes/Graphics/SubtitleScale",    []() { return Config::Fixes::SubtitleScale; },      [hExe]() { Fixes::Graphics::SubtitleScale::Apply(hExe); } },
 			{ "Patches/UI/VersionString",        []() { return true; },                             [hExe]() { Patches::UI::VersionString::Apply(hExe); } },
 			{ "Patches/Gameplay/IntroCutscene",  []() { return Config::Patches::IntroCutscene; },    [hExe]() { Patches::Gameplay::IntroCutscene::Apply(hExe); } },
+			{ "Patches/Gameplay/SkipVideos",     []() { return Config::Patches::SkipVideos; },       [hExe]() { Patches::Gameplay::SkipVideos::Apply(hExe); } },
 			{ "Patches/UI/MainIntro",            []() { return Config::Patches::MainIntro; },        [hExe]() { Patches::UI::MainIntro::Apply(hExe); } },
 			{ "Fixes/Save/SafeStringHandling",   []() { return true; },                             [hExe]() { Fixes::Save::SafeStringHandling::Apply(hExe); } },
 			{ "Fixes/Input/LegacyDirectInput",   []() { return Config::Fixes::LegacyDirectInput; },  [hExe]() { Fixes::Input::LegacyDirectInput::Apply(hExe); } },
