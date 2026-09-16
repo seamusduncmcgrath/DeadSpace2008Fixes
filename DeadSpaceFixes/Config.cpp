@@ -18,6 +18,7 @@ namespace Config {
 		bool Telemetry = true;
 		bool IntroCutscene = false;
 		bool MainIntro = false;
+		bool SkipVideos = false;
 	}
 
 	namespace Features {
@@ -71,6 +72,7 @@ namespace Config {
 			{ kPatchesSection, "RemoveTelemetry", 1, "Disable the game's telemetry/data collection" },
 			{ kPatchesSection, "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
 			{ kPatchesSection, "SkipIntroToMainMenu", 0, "Skip the boot intro and launch main menu immediately" },
+			{ kPatchesSection, "SkipLoreVideos", 0, "Make newly-triggered lore/vidlog videos skippable with F" },
 			{ kFeaturesSection, "SafeFPSCap", 0, "Cap the framerate to avoid physics/script issues" },
 		};
 
@@ -265,6 +267,7 @@ namespace Config {
 		Patches::Telemetry = read(kPatchesSection, "RemoveTelemetry", 1);
 		Patches::IntroCutscene = read(kPatchesSection, "SkipIshimuraLandingCutscene", 0);
 		Patches::MainIntro = read(kPatchesSection, "SkipIntroToMainMenu", 0);
+		Patches::SkipVideos = read(kPatchesSection, "SkipLoreVideos", 0);
 		Features::FrameRateCap = read(kFeaturesSection, "SafeFPSCap", 0);
 	}
 }

@@ -134,6 +134,9 @@
     <ClCompile Include="Patches\Gameplay\IntroCutscene.cpp">
       <Filter>Source Files\Patches</Filter>
     </ClCompile>
+    <ClCompile Include="Patches\Gameplay\SkipVideos.cpp">
+      <Filter>Source Files\Patches</Filter>
+    </ClCompile>
     <ClCompile Include="Patches\UI\MainIntro.cpp">
       <Filter>Source Files\Patches</Filter>
     </ClCompile>

@@ -8,6 +8,9 @@ namespace Patches {
 		namespace IntroCutscene {
 			void Apply(HMODULE hExe);
 		}
+		namespace SkipVideos {
+			void Apply(HMODULE hExe);
+		}
 	}
 
 	namespace UI {
