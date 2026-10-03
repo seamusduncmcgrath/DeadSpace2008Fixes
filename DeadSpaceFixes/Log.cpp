@@ -18,7 +18,11 @@ namespace Utils {
     namespace {
         // Only messages at or above this level are printed. Defaults to Info so
         // the verbose "Found <addr>" DEBUG lines stay out of the way.
+#ifdef _DEBUG
+        LogLevel g_LogLevel = LogLevel::Debug;
+#else
         LogLevel g_LogLevel = LogLevel::Info;
+#endif
     }
 
     void SetLogLevel(LogLevel level)

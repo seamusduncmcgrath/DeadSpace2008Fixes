@@ -1,7 +1,7 @@
 #include "common.h"
 #include "D3D9Device.h"
 #include "Config.h"
-#include "Features/Features.h"
+#include "Patches/Patches.h"
 
 namespace Features {
 

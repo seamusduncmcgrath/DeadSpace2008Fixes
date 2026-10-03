@@ -1,13 +1,6 @@
 #include "common.h"
 #include "Utils.h"
 
-//Native PS4/5 & Switch controller support via SDL3.
-//
-//This DLL is a proxy for the real xinput1_3.dll (see proxy.def), so the
-//XInputGetState/SetState/GetCapabilities functions below are exported and called
-//by the game. When a gamepad managed by SDL is connected we serve the input from
-//SDL; otherwise we forward to the real XInput DLL loaded from the system folder.
-
 namespace {
 
 	//Forwarding targets into the real xinput1_3.dll

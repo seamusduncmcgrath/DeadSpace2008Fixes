@@ -1,9 +1,7 @@
 #include "common.h"
 #include "Utils.h"
 #include "Config.h"
-#include "Fixes/Fixes.h"
 #include "Patches/Patches.h"
-#include "Features/Features.h"
 
 #include <functional>
 

@@ -1,6 +1,8 @@
-# DeadSpace2008Fixes
+<p align="center">
+  <img width="600" height="290" alt="logo" src="Assets/Images/deadspacefixeswhite.png" />
+</p>
 
-A mod for Dead Space (2008) that adds numerous fixes and improvements
+<p align="center">A mod for Dead Space (2008) that adds numerous fixes and improvements<p>
 
 # Features 
 
@@ -56,8 +58,21 @@ Removed some random telemetry that would tell EA what OS you are on and get your
 ## Native PS4/5 & Switch Controller Support
 The game now supports PS4/5 and Nintendo switch controllers using SDL3.
 
-## Fixed VSync
-The 30 FPS cap on the VSync has been removed, though the game uses half rate VSync so it will be capped to half your display refresh rate.
+## Fixed VSync In Windowed Mode
+The 30 FPS cap on VSync when I windowed mode has been removed, so now you can force proper VSync through your GPU driver or something similar. By default the game just caps the FPS when you enable VSync in windowed mode rather than actually applying VSync.
+
+<div align="center">
+  <table>
+    <tr>
+        <td width="10%"><img style="width:100%" src="Assets/Images/vsyncvanilla.png"></td>
+        <td width="10%"><img style="width:100%" src="Assets/Images/vsyncfixed.png"></td>
+    </tr>
+    <tr>
+      <td align="center">Vanilla VSync on 180hz display</td>
+      <td align="center">DeadSpaceFixes VSync on 180hz display</td>
+    </tr>
+  </table>
+</div>
 
 ## (Optional) 60 FPS Cap
 Simply change `SafeFPSCap=0` to `SafeFPSCap=1` in the `DeadSpaceFixes.ini`
@@ -77,9 +92,9 @@ Shortens the artificial wait on the loading screen once the level has finished l
 > [!NOTE]  
 > Requires at least Windows 7 SP1 x86 and a CPU with SSE2 support.
 >
-> **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest)
+> **Download** [DeadSpaceFixes](https://github.com/seamusduncmcgrath/DeadSpace2008Fixes/releases/latest/download/xinput1_3.dll)
 > 
-> Simply add the `xinput1_3.dll` `SDL3.dll` files you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked yoo should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
+> Simply add the `xinput1_3.dll` file you downloaded from above into the game folder next to `Dead Space.exe`, and if it worked you should see "DeadSpaceFixes Installed!" in the bottom right of the main menu instead of the version number.
 
 
 # Config

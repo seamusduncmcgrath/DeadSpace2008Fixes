@@ -9,32 +9,6 @@ namespace Fixes {
 
 			uintptr_t subtitleHookReturn = 0;
 			void* oSubtitleSettings = nullptr;
-			//feel like 0.8 is a better baseline, subtitles clip out less then
-			float subtitleScale = 1.0f;
-
-			__declspec(naked) void hkSubtitleScale() //note to self comment well
-			{
-				__asm
-				{
-					pushfd
-
-					cmp edi, 0 //is it the inventory or other menus?
-					je original_code //if yes skip to original code
-
-					//if it's a subtitle replace scale param
-					push eax
-					mov eax, dword ptr[subtitleScale]
-					mov dword ptr[ebp + 0x18], eax
-					pop eax
-
-					original_code :
-					popfd //restore cpu flags
-
-						mulss xmm0, dword ptr[ebp + 0x18] //original instruction
-
-						jmp[subtitleHookReturn] //jump back to engine
-				}
-			}
 
 #pragma pack(push, 1)
 			struct SubtitleSettings {
@@ -62,31 +36,25 @@ namespace Fixes {
 				int screenWidth = GetSystemMetrics(SM_CXSCREEN);
 				int screenHeight = GetSystemMetrics(SM_CYSCREEN);
 
+				// 1080p = 1.5x | 4K = 3.0x
 				float subtitleMultiplier = static_cast<float>(screenHeight) / 720.0f;
+				float newScale = 0.60f * subtitleMultiplier;
+
 				float aspectFix = (static_cast<float>(screenWidth) / screenHeight) / (16.0f / 9.0f);
 
-				//define the games origional values, easier to just do this rather than get em at runtime
-				const float origX = 0.20f;
-				const float origY = 0.25f;
-				const float origW = 0.60f;
-				const float origH = 0.10f;
-				const float origScale = 0.60f;
+				float boxW = 0.90f / aspectFix; // should make ultrawide better? gotta test it
+				float boxH = 0.15f;
 
-				float newW = origW * subtitleMultiplier * aspectFix;
-				float newH = origH * subtitleMultiplier;
-				float newScale = origScale * subtitleMultiplier;
+				//centers the box on screen
+				float posX = 0.5f - (boxW / 2.0f);
 
-				//calculate the original center points
-				//center = start position + (size / 2)
-				float centerX = origX + (origW / 2.0f); // Always 0.5 (perfect horizontal center)
-				float centerY = origY + (origH / 2.0f); // Always 0.3
+				float posY = 0.25f;
 
-				//shift the X and Y start positions so the expanded bounding box stays centered
-				data->x = centerX - (newW / 2.0f);
-				data->y = centerY - (newH / 2.0f);
-
-				data->boundingBoxX = newW;
-				data->boundingBoxY = newH;
+				//apply
+				data->x = posX;
+				data->y = posY;
+				data->boundingBoxX = boxW;
+				data->boundingBoxY = boxH;
 				data->fontScale = newScale;
 			}
 

@@ -75,17 +75,11 @@
     <ClInclude Include="Config.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Fixes\Fixes.h">
-      <Filter>Header Files\Fixes</Filter>
-    </ClInclude>
     <ClInclude Include="Patches\Patches.h">
       <Filter>Header Files\Patches</Filter>
     </ClInclude>
-    <ClInclude Include="Features\Features.h">
-      <Filter>Header Files\Features</Filter>
-    </ClInclude>
-    <ClInclude Include="Features\Graphics\D3D9Device.h">
-      <Filter>Header Files\Features</Filter>
+    <ClInclude Include="Patches\D3D9Device.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -113,53 +107,53 @@
     <ClCompile Include="Config.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fixes\Physics\Timer.cpp">
-      <Filter>Source Files\Fixes</Filter>
+    <ClCompile Include="Patches\MainIntro.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fixes\Graphics\VSync.cpp">
-      <Filter>Source Files\Fixes</Filter>
+    <ClCompile Include="Patches\AnisotropicFiltering.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fixes\Graphics\SubtitleScale.cpp">
-      <Filter>Source Files\Fixes</Filter>
+    <ClCompile Include="Patches\BorderlessWindow.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fixes\UI\LoadingScreen.cpp">
-      <Filter>Source Files\Fixes</Filter>
+    <ClCompile Include="Patches\D3D9Device.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fixes\Input\LegacyDirectInput.cpp">
-      <Filter>Source Files\Fixes</Filter>
+    <ClCompile Include="Patches\FrameRateCap.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Fixes\Save\SafeStringHandling.cpp">
-      <Filter>Source Files\Fixes</Filter>
+    <ClCompile Include="Patches\IntroCutscene.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\Gameplay\IntroCutscene.cpp">
-      <Filter>Source Files\Patches</Filter>
+    <ClCompile Include="Patches\LegacyDirectInput.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\Gameplay\SkipVideos.cpp">
-      <Filter>Source Files\Patches</Filter>
+    <ClCompile Include="Patches\LoadingScreen.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\UI\MainIntro.cpp">
-      <Filter>Source Files\Patches</Filter>
+    <ClCompile Include="Patches\VSync.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\UI\VersionString.cpp">
-      <Filter>Source Files\Patches</Filter>
+    <ClCompile Include="Patches\SafeStringHandling.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\System\BorderlessWindow.cpp">
-      <Filter>Source Files\Patches</Filter>
+    <ClCompile Include="Patches\SdlGamepad.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\System\Telemetry.cpp">
-      <Filter>Source Files\Patches</Filter>
+    <ClCompile Include="Patches\SubtitleScale.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Features\Input\SdlGamepad.cpp">
-      <Filter>Source Files\Features</Filter>
+    <ClCompile Include="Patches\Telemetry.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Features\Graphics\AnisotropicFiltering.cpp">
-      <Filter>Source Files\Features</Filter>
+    <ClCompile Include="Patches\Timer.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Features\Graphics\FrameRateCap.cpp">
-      <Filter>Source Files\Features</Filter>
+    <ClCompile Include="Patches\VersionString.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Features\Graphics\D3D9Device.cpp">
-      <Filter>Source Files\Features</Filter>
+    <ClCompile Include="Patches\SkipVideos.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

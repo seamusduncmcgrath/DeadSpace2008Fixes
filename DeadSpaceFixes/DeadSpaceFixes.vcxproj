@@ -29,7 +29,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
@@ -42,7 +42,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
@@ -86,7 +86,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;winmm.lib;oleaut32.lib;gdi32.lib;shell32.lib;setupapi.lib;advapi32.lib;ole32.lib;version.lib;imm32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -109,7 +109,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;winmm.lib;oleaut32.lib;gdi32.lib;shell32.lib;setupapi.lib;advapi32.lib;ole32.lib;version.lib;imm32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -130,7 +130,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;winmm.lib;oleaut32.lib;gdi32.lib;shell32.lib;setupapi.lib;advapi32.lib;ole32.lib;version.lib;imm32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -153,7 +153,7 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
       <OutputFile>$(OutDir)xinput1_3.dll</OutputFile>
-      <AdditionalDependencies>SDL3.lib;d3d9.lib;user32.lib</AdditionalDependencies>
+      <AdditionalDependencies>SDL3-static.lib;d3d9.lib;user32.lib;winmm.lib;oleaut32.lib;gdi32.lib;shell32.lib;setupapi.lib;advapi32.lib;ole32.lib;version.lib;imm32.lib</AdditionalDependencies>
       <ModuleDefinitionFile>proxy.def</ModuleDefinitionFile>
       <AdditionalLibraryDirectories>$(ProjectDir)lib\SDL3\x86</AdditionalLibraryDirectories>
     </Link>
@@ -161,9 +161,6 @@
   <ItemGroup>
     <ClInclude Include="common.h" />
     <ClInclude Include="Config.h" />
-    <ClInclude Include="Features\Features.h" />
-    <ClInclude Include="Features\Graphics\D3D9Device.h" />
-    <ClInclude Include="Fixes\Fixes.h" />
     <ClInclude Include="include\MinHook\buffer.h" />
     <ClInclude Include="include\MinHook\hde32.h" />
     <ClInclude Include="include\MinHook\MinHook.h" />
@@ -171,6 +168,7 @@
     <ClInclude Include="include\MinHook\table32.h" />
     <ClInclude Include="include\MinHook\trampoline.h" />
     <ClInclude Include="include\SDL3\SDL.h" />
+    <ClInclude Include="Patches\D3D9Device.h" />
     <ClInclude Include="Patches\Patches.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Utils.h" />
@@ -178,27 +176,27 @@
   <ItemGroup>
     <ClCompile Include="Config.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="Features\Graphics\AnisotropicFiltering.cpp" />
-    <ClCompile Include="Features\Graphics\D3D9Device.cpp" />
-    <ClCompile Include="Features\Graphics\FrameRateCap.cpp" />
-    <ClCompile Include="Features\Input\SdlGamepad.cpp" />
-    <ClCompile Include="Fixes\Graphics\SubtitleScale.cpp" />
-    <ClCompile Include="Fixes\Graphics\VSync.cpp" />
-    <ClCompile Include="Fixes\Input\LegacyDirectInput.cpp" />
-    <ClCompile Include="Fixes\Physics\Timer.cpp" />
-    <ClCompile Include="Fixes\Save\SafeStringHandling.cpp" />
-    <ClCompile Include="Fixes\UI\LoadingScreen.cpp" />
     <ClCompile Include="include\MinHook\buffer.c" />
     <ClCompile Include="include\MinHook\hde32.c" />
     <ClCompile Include="include\MinHook\hook.c" />
     <ClCompile Include="include\MinHook\trampoline.c" />
-    <ClCompile Include="Patches\Gameplay\IntroCutscene.cpp" />
-    <ClCompile Include="Patches\Gameplay\SkipVideos.cpp" />
-    <ClCompile Include="Patches\System\BorderlessWindow.cpp" />
-    <ClCompile Include="Patches\System\Telemetry.cpp" />
-    <ClCompile Include="Patches\UI\MainIntro.cpp" />
-    <ClCompile Include="Patches\UI\VersionString.cpp" />
+    <ClCompile Include="Patches\AnisotropicFiltering.cpp" />
+    <ClCompile Include="Patches\BorderlessWindow.cpp" />
+    <ClCompile Include="Patches\D3D9Device.cpp" />
+    <ClCompile Include="Patches\FrameRateCap.cpp" />
+    <ClCompile Include="Patches\IntroCutscene.cpp" />
+    <ClCompile Include="Patches\LegacyDirectInput.cpp" />
+    <ClCompile Include="Patches\LoadingScreen.cpp" />
+    <ClCompile Include="Patches\MainIntro.cpp" />
+    <ClCompile Include="Patches\SafeStringHandling.cpp" />
+    <ClCompile Include="Patches\SdlGamepad.cpp" />
+    <ClCompile Include="Patches\SkipVideos.cpp" />
+    <ClCompile Include="Patches\SubtitleScale.cpp" />
+    <ClCompile Include="Patches\Telemetry.cpp" />
+    <ClCompile Include="Patches\Timer.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="Patches\VersionString.cpp" />
+    <ClCompile Include="Patches\VSync.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>
