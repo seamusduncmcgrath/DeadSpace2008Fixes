@@ -22,8 +22,8 @@ namespace Patches {
 			{
 				//Entry of sub_587210 (the shared video skip gate).
 				const char* gateSig = "83 EC 0C 55 8B 6C 24 14 8B 8D 94 02 00 00 32 C0 85 C9 0F 84 ?? ?? ?? ??";
-				uintptr_t gate = Utils::FindPattern(hExe, gateSig);
-				if (gate == 0) {
+				uintptr_t gateAddr = Utils::FindPattern(hExe, gateSig);
+				if (gateAddr == 0) {
 					LOG_WARN("[Patches/Gameplay/SkipVideos]", "Video skip gate signature not found");
 					return;
 				}
@@ -31,8 +31,8 @@ namespace Patches {
 				//gate+0x56: jne after "block byte +0x275 == 0".
 				//gate+0x6B: jne after "+0x4C bit 1" test.
 				BYTE nop[2] = { 0x90, 0x90 };
-				if (Utils::WriteBytes(gate + 0x56, nop, 2) &&
-				    Utils::WriteBytes(gate + 0x6B, nop, 2))
+				if (Utils::WriteBytes(gateAddr + 0x56, nop, 2) &&
+				    Utils::WriteBytes(gateAddr + 0x6B, nop, 2))
 					LOG_INFO("[Patches/Gameplay/SkipVideos]", "New in-game videos are now skippable (press F to cancel)");
 				else
 					LOG_WARN("[Patches/Gameplay/SkipVideos]", "Failed to patch the video skip gate");

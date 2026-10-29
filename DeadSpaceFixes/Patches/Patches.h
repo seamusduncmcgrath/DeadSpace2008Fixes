@@ -56,7 +56,28 @@ namespace Features {
 
 }
 
+namespace Input {
+	namespace LegacyDirectInput {
+		void Apply(HMODULE hExe);
+	}
+	namespace RemoveWindowsHooks {
+		void Apply(HMODULE hExe);
+	}
+	namespace MouseLook {
+		void Apply(HMODULE hExe);
+	}
+	namespace MenuCamera {
+		void Apply(HMODULE hExe);
+	}
+}
+
 namespace Fixes {
+
+	namespace System {
+		namespace CPUFix {
+			void Apply(HMODULE hExe);
+		}
+	}
 
 	namespace Physics {
 		namespace Timer {
@@ -76,12 +97,6 @@ namespace Fixes {
 
 	namespace UI {
 		namespace LoadingScreen {
-			void Apply(HMODULE hExe);
-		}
-	}
-
-	namespace Input {
-		namespace LegacyDirectInput {
 			void Apply(HMODULE hExe);
 		}
 	}

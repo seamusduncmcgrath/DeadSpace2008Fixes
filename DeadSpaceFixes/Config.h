@@ -7,7 +7,7 @@ namespace Config {
 		extern bool SubtitleScale;      // FixSubtitleScale
 		extern bool LegacyDirectInput;  // PatchOutDInput8
 		extern bool LoadingScreenDelay; // SkipLoadingScreenDelay
-		extern bool HighPrecisionTimer; // UseHighPrecisionTimer
+		extern bool HighCoreCPU;        // FixHighCoreCPU
 	}
 
 	namespace Patches {
@@ -17,9 +17,10 @@ namespace Config {
 		extern bool MainIntro;         // SkipIntroToMainMenu
 		extern bool SkipVideos;        // SkipLoreVideos
 	}
-
+	 
 	namespace Features {
 		extern bool FrameRateCap;      // SafeFPSCap
+		extern bool MainMenuCamera;
 	}
 
 	void Load();

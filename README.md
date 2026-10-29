@@ -10,8 +10,6 @@
 Adds a simple borderless windowed mode that fixes gamma issues and alt-tabbing bugs. To use, simply disable fullscreen in the game settings.
 > [!WARNING]
  Set BorderlessWindowed to 0 in the `DeadSpaceFixes.ini` if you plan on not using borderless!
-## Reduced Issues At High FPS
-A large amount of the physics/ragdoll issues at 60+ FPS are caused by the game relying on GetTickCount, which is really inaccurate. I found an unused developer flag in the engine that allows you to swap GetTickCount for QueryPerformanceCounter, which is much more precise. Visceral likely disabled this because older AMD CPUs had desync issues, but on modern hardware, it works perfectly. *Note:* I still recommend capping the FPS to around 120-180. I was able to complete QTEs and had no issues with ragdolls at a 180 FPS cap, but if it goes above ~200 FPS, the issues start to come back.
 
 ## Anisotropic Filtering
 Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero performance loss on modern hardware and hugely improves texture clarity.
@@ -28,7 +26,7 @@ Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero 
   </table>
 </div>
 
-## Fixed Crashes on 10+ Core CPUs
+## (Experimental) Fixed Crashes on 10+ Core CPUs
 The crashes on modern 10+ core CPUs should be fixed. (I do not own a 10+ core CPU to 100% confirm, but there's no reason for the patch not to work).
 
 ## Significantly Faster Startup Times
@@ -59,7 +57,7 @@ Removed some random telemetry that would tell EA what OS you are on and get your
 The game now supports PS4/5 and Nintendo switch controllers using SDL3.
 
 ## Fixed VSync In Windowed Mode
-The 30 FPS cap on VSync when I windowed mode has been removed, so now you can force proper VSync through your GPU driver or something similar. By default the game just caps the FPS when you enable VSync in windowed mode rather than actually applying VSync.
+The 30 FPS cap on VSync when in windowed mode has been removed, and VSync has been properly implemented in windowed mode as normally it never enables VSync and instead just cpas the FPS. In fullscreen the game normally uses half-rate VSync so it runs at half your refresh rate, it has been changed to standard VSync.
 
 <div align="center">
   <table>

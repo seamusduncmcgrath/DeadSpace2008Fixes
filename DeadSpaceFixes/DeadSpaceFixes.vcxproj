@@ -35,7 +35,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -48,7 +48,7 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v145</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -188,15 +188,17 @@
     <ClCompile Include="Patches\LegacyDirectInput.cpp" />
     <ClCompile Include="Patches\LoadingScreen.cpp" />
     <ClCompile Include="Patches\MainIntro.cpp" />
+    <ClCompile Include="Patches\MenuCamera.cpp" />
+    <ClCompile Include="Patches\MouseLook.cpp" />
     <ClCompile Include="Patches\SafeStringHandling.cpp" />
     <ClCompile Include="Patches\SdlGamepad.cpp" />
     <ClCompile Include="Patches\SkipVideos.cpp" />
     <ClCompile Include="Patches\SubtitleScale.cpp" />
     <ClCompile Include="Patches\Telemetry.cpp" />
-    <ClCompile Include="Patches\Timer.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="Patches\VersionString.cpp" />
     <ClCompile Include="Patches\VSync.cpp" />
+    <ClCompile Include="Patches\WindowHooks.cpp" />
     <ClCompile Include="Utils.cpp" />
   </ItemGroup>
   <ItemGroup>

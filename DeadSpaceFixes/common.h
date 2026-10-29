@@ -73,15 +73,36 @@ typedef struct _XINPUT_CAPABILITIES {
     XINPUT_VIBRATION Vibration;
 } XINPUT_CAPABILITIES, * PXINPUT_CAPABILITIES;
 
+/*
+struct sAddresses
+{
+    uintptr_t vsyncStartupAddress;
+    uintptr_t vsyncmenuAddress;
+    uintptr_t d3dIntervalAddress;
+    uintptr_t d3dWindowedIntervalAddress;
+    uintptr_t versionAddress;
+    uintptr_t subtitleAddres;
+    uintptr_t gateAddr;
+    uintptr_t saveStringAddress;
+    uintptr_t cameraLookAddress;
+    uintptr_t yawScaleRef;
+    uintptr_t aimLookAddress;
+    uintptr_t menuCameraAddress;
+    uintptr_t cursorAddress;
+    uintptr_t useDirectInputAddress;
+    uintptr_t ngPlusAddress;
+};
+*/
+
 
 // ---- Function pointer typedefs for hooked engine / system APIs ----
 typedef HRESULT(__stdcall* SetSamplerState_t)(IDirect3DDevice9*, DWORD, D3DSAMPLERSTATETYPE, DWORD);
 
 typedef HWND(WINAPI* CreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 
-typedef BOOL(WINAPI* AdjustWindowRect_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu);
+typedef LONG(WINAPI* SetWindowLongA_t)(HWND hWnd, int nIndex, LONG dwNewLong);
 
-typedef BOOL(WINAPI* AdjustWindowRectEx_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle);
+typedef BOOL(WINAPI* SetWindowPos_t)(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
 
 typedef HRESULT(WINAPI* DirectInput8Create_t)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 
@@ -108,6 +129,9 @@ typedef DWORD(WINAPI* XInputSetState_t)(DWORD dwUserIndex, XINPUT_VIBRATION* pVi
 typedef DWORD(WINAPI* XInputGetCapabilities_t)(DWORD dwUserIndex, DWORD dwFlags, XINPUT_CAPABILITIES* pCapabilities);
 
 typedef HWND(WINAPI* GetForegroundWindow_t)();
+
+typedef HHOOK(WINAPI* SetWindowsHookExA_t)(int idHook, HOOKPROC lpfn, HINSTANCE hmod, DWORD dwThreadId);
+
 
 extern "C" DWORD WINAPI XInputGetState(DWORD dwUserIndex, XINPUT_STATE* pState);
 extern "C" DWORD WINAPI XInputSetState(DWORD dwUserIndex, XINPUT_VIBRATION* pVibration);

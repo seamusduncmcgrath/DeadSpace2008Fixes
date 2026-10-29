@@ -20,8 +20,9 @@ namespace {
 
 		SDL_Event event;
 
-		//SDL_WaitEventTimeout pumps the event queue without burning your CPU, it checks for events every 10 milliseconds
-		while (SDL_WaitEventTimeout(&event, 10))
+		//SDL_WaitEvent blocks until the next event without burning your CPU, and keeps pumping the gamepad state while it waits.
+		//Don't use SDL_WaitEventTimeout as the loop condition, it returns false on timeout so the thread would exit and freeze all controller input
+		while (SDL_WaitEvent(&event))
 		{
 			if (event.type == SDL_EVENT_GAMEPAD_ADDED) //controller plugged in
 			{

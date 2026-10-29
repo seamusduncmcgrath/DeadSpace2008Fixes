@@ -10,7 +10,7 @@ namespace Config {
 		bool SubtitleScale = true;
 		bool LegacyDirectInput = true;
 		bool LoadingScreenDelay = false;
-		bool HighPrecisionTimer = true;
+		bool HighCoreCPU = true;
 	}
 
 	namespace Patches {
@@ -23,6 +23,7 @@ namespace Config {
 
 	namespace Features {
 		bool FrameRateCap = false;
+		bool MainMenuCamera = false;
 	}
 
 	//config handling: generates DeadSpaceFixes.ini on first launch
@@ -49,7 +50,7 @@ namespace Config {
 		// Bump this whenever the config key set changes. A stale config file
 		// is then regenerated with the canonical keys instead of silently
 		// dropping options the current build doesn't know about.
-		constexpr int kConfigVersion = 3;
+		constexpr int kConfigVersion = 5;
 
 		// Every known option is declared here once and used everywhere below,
 		// so the default, the help text and the read/write logic can't drift
@@ -66,14 +67,15 @@ namespace Config {
 			{ kFixesSection,   "FixVSync", 1, "Fix vsync behaviour" },
 			{ kFixesSection,   "FixSubtitleScale", 1, "Fix subtitle scaling" },
 			{ kFixesSection,   "PatchOutDInput8", 1, "Patch out the game's DInput8 DLL usage" },
-			{ kFixesSection,   "UseHighPrecisionTimer", 1, "Use the high-precision timer instead of GetTickCount (helps at high framerates)" },
 			{ kFixesSection,   "SkipLoadingScreenDelay", 0, "Skip the artificial wait on the loading screen once the level is ready" },
+			{ kFixesSection,   "FixHighCoreCPU", 1, "Fix infinite loop on CPUs with more than 32 logical cores, and limit worker threads to prevent engine instability" },
 			{ kPatchesSection, "BorderlessWindowed", 1, "Run the game in a borderless window instead of fullscreen" },
-			{ kPatchesSection, "RemoveTelemetry", 1, "Disable the game's telemetry/data collection" },
+			{ kPatchesSection, "RemoveTelemetry", 0, "Disable the game's telemetry/data collection" },
 			{ kPatchesSection, "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
-			{ kPatchesSection, "SkipIntroToMainMenu", 0, "Skip the boot intro and launch main menu immediately" },
+			{ kPatchesSection, "SkipIntroToMainMenu", 1, "Skip the boot intro and launch main menu immediately" },
 			{ kPatchesSection, "SkipLoreVideos", 0, "Make newly-triggered lore/vidlog videos skippable with F" },
 			{ kFeaturesSection, "SafeFPSCap", 0, "Cap the framerate to avoid physics/script issues" },
+			{ kFeaturesSection, "MouseMenuCamera", 0, "Allows you to move the main menu camera with a mouse, normally you have to use a controller."},
 		};
 
 		// Note: the game's config lives next to the .exe (the DLL runs from the
@@ -262,12 +264,13 @@ namespace Config {
 		Fixes::SubtitleScale = read(kFixesSection, "FixSubtitleScale", 1);
 		Fixes::LegacyDirectInput = read(kFixesSection, "PatchOutDInput8", 1);
 		Fixes::LoadingScreenDelay = read(kFixesSection, "SkipLoadingScreenDelay", 0);
-		Fixes::HighPrecisionTimer = read(kFixesSection, "UseHighPrecisionTimer", 1);
+		Fixes::HighCoreCPU = read(kFixesSection, "FixHighCoreCPU", 1);
 		Patches::BorderlessWindow = read(kPatchesSection, "BorderlessWindowed", 1);
 		Patches::Telemetry = read(kPatchesSection, "RemoveTelemetry", 1);
 		Patches::IntroCutscene = read(kPatchesSection, "SkipIshimuraLandingCutscene", 0);
 		Patches::MainIntro = read(kPatchesSection, "SkipIntroToMainMenu", 0);
 		Patches::SkipVideos = read(kPatchesSection, "SkipLoreVideos", 0);
 		Features::FrameRateCap = read(kFeaturesSection, "SafeFPSCap", 0);
+		Features::MainMenuCamera = read(kFeaturesSection, "MouseMenuCamera", 0);
 	}
 }

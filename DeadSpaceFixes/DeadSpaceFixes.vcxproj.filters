@@ -146,13 +146,19 @@
     <ClCompile Include="Patches\Telemetry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Patches\Timer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Patches\VersionString.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Patches\SkipVideos.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\WindowHooks.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\MouseLook.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\MenuCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
