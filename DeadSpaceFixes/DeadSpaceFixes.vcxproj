@@ -170,6 +170,8 @@
     <ClInclude Include="include\SDL3\SDL.h" />
     <ClInclude Include="Patches\D3D9Device.h" />
     <ClInclude Include="Patches\Patches.h" />
+    <ClInclude Include="Shaders\FXAA_DeferredEdgeAA.h" />
+    <ClInclude Include="Shaders\FXAA_EdgeAAFast.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="Utils.h" />
   </ItemGroup>
@@ -183,19 +185,24 @@
     <ClCompile Include="Patches\AnisotropicFiltering.cpp" />
     <ClCompile Include="Patches\BorderlessWindow.cpp" />
     <ClCompile Include="Patches\D3D9Device.cpp" />
+    <ClCompile Include="Patches\FixFullscreenGamma.cpp" />
     <ClCompile Include="Patches\FrameRateCap.cpp" />
     <ClCompile Include="Patches\IntroCutscene.cpp" />
+    <ClCompile Include="Patches\LegacyBorderless.cpp" />
     <ClCompile Include="Patches\LegacyDirectInput.cpp" />
     <ClCompile Include="Patches\LoadingScreen.cpp" />
     <ClCompile Include="Patches\MainIntro.cpp" />
     <ClCompile Include="Patches\MenuCamera.cpp" />
     <ClCompile Include="Patches\MouseLook.cpp" />
     <ClCompile Include="Patches\SafeStringHandling.cpp" />
+    <ClCompile Include="Patches\ScriptLoader.cpp" />
+    <ClCompile Include="Patches\SimGroupLoader.cpp" />
     <ClCompile Include="Patches\SdlGamepad.cpp" />
     <ClCompile Include="Patches\SkipVideos.cpp" />
     <ClCompile Include="Patches\SubtitleScale.cpp" />
     <ClCompile Include="Patches\Telemetry.cpp" />
     <ClCompile Include="Log.cpp" />
+    <ClCompile Include="Patches\UnlockImpossible.cpp" />
     <ClCompile Include="Patches\VersionString.cpp" />
     <ClCompile Include="Patches\VSync.cpp" />
     <ClCompile Include="Patches\WindowHooks.cpp" />
@@ -203,6 +210,8 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="proxy.def" />
+    <None Include="Shaders\FXAA.hlsl" />
+    <None Include="Shaders\build_shaders.bat" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -7,9 +7,10 @@
 # Features 
 
 ## Borderless Windowed
-Adds a simple borderless windowed mode that fixes gamma issues and alt-tabbing bugs. To use, simply disable fullscreen in the game settings.
-> [!WARNING]
- Set BorderlessWindowed to 0 in the `DeadSpaceFixes.ini` if you plan on not using borderless!
+Adds a option to enable borderless when the game is set in windowed to the resolution list (the old implementation of borderless is avaliable if you enable LegacyBorderlessWindowed in the INI)
+<p align="center">
+  <img width="90%" height="90%"alt="logo" src="Assets/Images/borderless.png" />
+</p>
 
 ## Anisotropic Filtering
 Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero performance loss on modern hardware and hugely improves texture clarity.
@@ -46,6 +47,12 @@ Fixes the too small subtitles at resolutions above 720p; no need to squint to se
     </tr>
   </table>
 </div>
+
+## Mouse Sensitivity Fix
+Normally the mouse sensitivity is tied to game's FPS, which means at 60+ FPS the sensitivity heavily slows down, this is fixed. Deadzones and acceleration have also been removed. If you don't like how the camera feels after this set `FixMouseSensitivty=1` in `DeadSpaceFixes.ini` to `FixMouseSensitivty=0`
+
+## Fixed fullscreen brightness
+In the fullscreen the brightness is normally far higher than it should be (no clue how it got past QA) and this has been fixed. It's most noticable in the main menu
 
 ## Safer Save String Handling
 Improved the save string handling; Viceral had left an issue where it would clear 128 bytes rather than 128 wide characters (256 bytes), which would cause garbage data and could cause issues and crashes.
@@ -84,6 +91,14 @@ Skips the boot intro and lands directly on the main menu. Set `SkipIntroToMainMe
 ## (Optional) Skip Loading Screen Delay
 Shortens the artificial wait on the loading screen once the level has finished loading when starting a new game. The vanilla game holds the loading screen on a ~30 second tip-cycling loop even after the level is ready; this cuts that hold to ~3 seconds, so the loading tips still appear but the screen drops almost immediately. Set `SkipLoadingScreenDelay=1` in the config file.
 
+## Loose Lua Script Loader
+`.lua` and `.luac` scripts are now loaded from a folder named `scripts` next to the `.exe`. I got Claude to do a Lua function dump in [docs/LuaFunctions.md](docs/LuaFunctions.md) that you can use to write your own scripts.
+
+## Loose SimGroup Loader
+Loose SimGroups (`.sgp`) are loaded from a folder named `simgroup_mods` next to the `.exe`. You can use this to modify lots of things with the game, and they are editable with [VisceralToolkit](https://github.com/Greavesy1899/VisceralToolkit).
+
+***Credit to [Greavesy1899](https://github.com/Greavesy1899)***
+
 
 # Install Guide
 
@@ -100,26 +115,33 @@ Some settings can be enabled or disabled using `DeadSpaceFixes.ini`. Create this
 
 ```ini
 [Settings]
-;Changes the games windowed mode to borderless windowed
-BorderlessWindowed=1
-;Removes the 30 FPS cap when VSync is enabled.
+[Info]
+ConfigVersion=5
+[Fixes]
+; Fix vsync behaviour
 FixVSync=1
-;Removes legacy DirectInput8 controller support, this reduces startup times and stuttering
-PatchOutDInput8=1
-;Removes EA's telemetry
-RemoveTelemetry=1
-;Enables a 60 FPS cap
-SafeFPSCap=1
-;Fixes subtitles being to small at high resolutions
+; Fix subtitle scaling
 FixSubtitleScale=1
-;Skips the Ishimura landing cutscene to help with speedrunning
+; Patch out the game's DInput8 DLL usage
+PatchOutDInput8=1
+; Skip the artificial wait on the loading screen once the level is ready
+SkipLoadingScreenDelay=1
+[Patches]
+; Run the game in a borderless window instead of fullscreen
+BorderlessWindowed=1
+; Disable the game's telemetry/data collection
+RemoveTelemetry=1
+; Skip the Ishimura landing cutscene on new game (plus) start
 SkipIshimuraLandingCutscene=0
-;Skips the boot intro and lands directly on the main menu
-SkipIntroToMainMenu=0
-;Skips the artificial wait on the loading screen once the level is ready on new game
-SkipLoadingScreenDelay=0
-;Uses the high-precision timer instead of GetTickCount (helps at high framerates)
-UseHighPrecisionTimer=1
+; Skip the boot intro and launch main menu immediately
+SkipIntroToMainMenu=1
+; Make newly-triggered lore/vidlog videos skippable with F
+SkipLoreVideos=0
+[Features]
+; Cap the framerate to avoid physics/script issues
+SafeFPSCap=0
+; Allows you to move the main menu camera with a mouse, normally you have to use a controller.
+MouseMenuCamera=0
 ```
 
 ## Credits
@@ -127,4 +149,5 @@ UseHighPrecisionTimer=1
 - [MinHook](https://github.com/tsudakageyu/minhook) for hooking.
 - [SuiMachine](https://github.com/SuiMachine/Dead-Space---Intro-Skip) for the original intro skip mod.
 - [MarkerPatch](https://github.com/Wemino/MarkerPatch) for the save string handling fix and reverse engineering references.
+- [GF2ASI](https://github.com/Omerta-Labs/GF2ASI) for the loose SimGroup loader
 

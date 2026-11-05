@@ -1,5 +1,8 @@
 #include <Windows.h>
 #include <string>
+#include <charconv>
+#include <cmath>
+#include <cstring>
 #include "Config.h"
 #include "Utils.h"
 
@@ -10,7 +13,7 @@ namespace Config {
 		bool SubtitleScale = true;
 		bool LegacyDirectInput = true;
 		bool LoadingScreenDelay = false;
-		bool HighCoreCPU = true;
+		bool FixMouseSensitivty = true;
 	}
 
 	namespace Patches {
@@ -19,11 +22,14 @@ namespace Config {
 		bool IntroCutscene = false;
 		bool MainIntro = false;
 		bool SkipVideos = false;
+		bool LegacyBorderlessWindow = false;
+		bool UnlockImpossible = false;
 	}
 
 	namespace Features {
 		bool FrameRateCap = false;
 		bool MainMenuCamera = false;
+		float ADSMouseSensitivity = 1.0f;
 	}
 
 	//config handling: generates DeadSpaceFixes.ini on first launch
@@ -38,19 +44,19 @@ namespace Config {
 		// namespaces: [Fixes], [Patches] and [Features]. Each known option is
 		// declared once here with its section, so the default, the help text and
 		// the read/write logic can't drift apart.
-		constexpr const char* kFixesSection = "Fixes";
-		constexpr const char* kPatchesSection = "Patches";
-		constexpr const char* kFeaturesSection = "Features";
-		constexpr const char* kInfoSection = "Info";
-		constexpr const char* kVersionKey = "ConfigVersion";
+		constexpr char kFixesSection[] = "Fixes";
+		constexpr char kPatchesSection[] = "Patches";
+		constexpr char kFeaturesSection[] = "Features";
+		constexpr char kInfoSection[] = "Info";
+		constexpr char kVersionKey[] = "ConfigVersion";
 		// Pre-v3 builds wrote every key under one flat [Settings] section; the
 		// option names never changed, only their grouping. MigrateLegacyConfig
 		// carries any user-set values over to the grouped sections.
-		constexpr const char* kLegacySection = "Settings";
+		constexpr char kLegacySection[] = "Settings";
 		// Bump this whenever the config key set changes. A stale config file
 		// is then regenerated with the canonical keys instead of silently
 		// dropping options the current build doesn't know about.
-		constexpr int kConfigVersion = 5;
+		constexpr int kConfigVersion = 8;
 
 		// Every known option is declared here once and used everywhere below,
 		// so the default, the help text and the read/write logic can't drift
@@ -59,23 +65,26 @@ namespace Config {
 		struct Entry {
 			const char* section;
 			const char* key;
-			int def;
+			const char* def;
 			const char* help;
 		};
 
 		const Entry kEntries[] = {
-			{ kFixesSection,   "FixVSync", 1, "Fix vsync behaviour" },
-			{ kFixesSection,   "FixSubtitleScale", 1, "Fix subtitle scaling" },
-			{ kFixesSection,   "PatchOutDInput8", 1, "Patch out the game's DInput8 DLL usage" },
-			{ kFixesSection,   "SkipLoadingScreenDelay", 0, "Skip the artificial wait on the loading screen once the level is ready" },
-			{ kFixesSection,   "FixHighCoreCPU", 1, "Fix infinite loop on CPUs with more than 32 logical cores, and limit worker threads to prevent engine instability" },
-			{ kPatchesSection, "BorderlessWindowed", 1, "Run the game in a borderless window instead of fullscreen" },
-			{ kPatchesSection, "RemoveTelemetry", 0, "Disable the game's telemetry/data collection" },
-			{ kPatchesSection, "SkipIshimuraLandingCutscene", 0, "Skip the Ishimura landing cutscene on new game (plus) start" },
-			{ kPatchesSection, "SkipIntroToMainMenu", 1, "Skip the boot intro and launch main menu immediately" },
-			{ kPatchesSection, "SkipLoreVideos", 0, "Make newly-triggered lore/vidlog videos skippable with F" },
-			{ kFeaturesSection, "SafeFPSCap", 0, "Cap the framerate to avoid physics/script issues" },
-			{ kFeaturesSection, "MouseMenuCamera", 0, "Allows you to move the main menu camera with a mouse, normally you have to use a controller."},
+			{ kFixesSection,   "FixVSync", "1", "Fix vsync behaviour" },
+			{ kFixesSection,   "FixSubtitleScale", "1", "Fix subtitle scaling" },
+			{ kFixesSection,   "PatchOutDInput8", "1", "Patch out the game's DInput8 DLL usage" },
+			{ kFixesSection,   "SkipLoadingScreenDelay", "0", "Skip the artificial wait on the loading screen once the level is ready" },
+			{ kFixesSection,   "FixMouseSensitivty", "1", "Makes it so the mouse sensitivty is no longer tied to the framerate" },
+			{ kPatchesSection, "BorderlessWindowed", "1", "Adds a borderless option in the games resolution list" },
+			{ kPatchesSection, "LegacyBorderlessWindowed", "0", "Run the game in a borderless window instead of fullscreen (legacy as there's a chance of the main borderless patch causing issues when switching resolution)" },
+			{ kPatchesSection, "RemoveTelemetry", "0", "Disable the game's telemetry/data collection" },
+			{ kPatchesSection, "SkipIshimuraLandingCutscene", "0", "Skip the Ishimura landing cutscene on new game (plus) start" },
+			{ kPatchesSection, "SkipIntroToMainMenu", "1", "Skip the boot intro and launch main menu immediately" },
+			{ kPatchesSection, "SkipLoreVideos", "0", "Make newly-triggered lore/vidlog videos skippable with F" },
+			{ kPatchesSection, "UnlockImpossible", "0", "Unlocks impossible difficulty without having to play through the whole game" },
+			{ kFeaturesSection, "SafeFPSCap", "0", "Cap the framerate to avoid physics/script issues" },
+			{ kFeaturesSection, "MouseMenuCamera", "0", "Allows you to move the main menu camera with a mouse, normally you have to use a controller." },
+			{ kFeaturesSection, "ADSMouseSensitivity", "1.0", "Changes the aim down sights sensitivity when FixMouseSensitivty is enabled. (only applys when FixMouseSensitivty=1)" },
 		};
 
 		// Note: the game's config lives next to the .exe (the DLL runs from the
@@ -120,7 +129,7 @@ namespace Config {
 				}
 				buffer += e.key;
 				buffer += "=";
-				buffer += e.def ? "1" : "0";
+				buffer += e.def;
 				buffer += '\0';
 			}
 			if (!buffer.empty()) {
@@ -134,11 +143,11 @@ namespace Config {
 		// value can never equal. Only when the sentinel comes back do we know the
 		// key is genuinely missing and add it with its default.
 		void EnsureKeyPresent(const std::string& path, const Entry& e) {
-			char value[8] = { 0 };
+			char value[32] = { 0 };
 			constexpr char kMissing[] = "\x01";
 			DWORD n = GetPrivateProfileStringA(e.section, e.key, kMissing, value, sizeof(value), path.c_str());
 			if (n == 1 && value[0] == kMissing[0])
-				WritePrivateProfileStringA(e.section, e.key, e.def ? "1" : "0", path.c_str());
+				WritePrivateProfileStringA(e.section, e.key, e.def, path.c_str());
 		}
 
 		// The profile API reads and writes key/value pairs but never comments, so
@@ -174,8 +183,8 @@ namespace Config {
 			for (const Entry& e : kEntries) {
 				if (e.section != section)
 					continue;
-				char value[8] = { 0 };
-				GetPrivateProfileStringA(section, e.key, e.def ? "1" : "0", value, sizeof(value), path.c_str());
+				char value[32] = { 0 };
+				GetPrivateProfileStringA(section, e.key, e.def, value, sizeof(value), path.c_str());
 				if (e.help) {
 					buffer += "; ";
 					buffer += e.help;
@@ -224,7 +233,7 @@ namespace Config {
 			constexpr char kMissing[] = "\x01";
 			bool any = false;
 			for (const Entry& e : kEntries) {
-				char value[8] = { 0 };
+				char value[32] = { 0 };
 				DWORD n = GetPrivateProfileStringA(kLegacySection, e.key, kMissing, value, sizeof(value), path.c_str());
 				if (n != 0 && !(n == 1 && value[0] == kMissing[0])) {
 					WritePrivateProfileStringA(e.section, e.key, value, path.c_str());
@@ -260,17 +269,35 @@ namespace Config {
 			return GetPrivateProfileIntA(section, key, def, configPath.c_str()) != 0;
 		};
 
+		//lord why is there no GetPrivateProfileFloatA
+		auto readFloat = [&](const char* section, const char* key, float def, float min, float max) {
+			char buffer[32] = {};
+			GetPrivateProfileStringA(section, key, "", buffer, sizeof(buffer), configPath.c_str());
+
+			float value = def;
+			//stops at the first character that isn't part of a number, so "0.15 ; comment" still reads as 0.15
+			auto [ptr, ec] = std::from_chars(buffer, buffer + strlen(buffer), value);
+			if (ec != std::errc() || ptr == buffer || !std::isfinite(value))
+				return def;
+
+			return value < min ? min : (value > max ? max : value);
+		};
+
+
 		Fixes::VSync = read(kFixesSection, "FixVSync", 1);
 		Fixes::SubtitleScale = read(kFixesSection, "FixSubtitleScale", 1);
 		Fixes::LegacyDirectInput = read(kFixesSection, "PatchOutDInput8", 1);
 		Fixes::LoadingScreenDelay = read(kFixesSection, "SkipLoadingScreenDelay", 0);
-		Fixes::HighCoreCPU = read(kFixesSection, "FixHighCoreCPU", 1);
+		Fixes::FixMouseSensitivty = read(kFixesSection, "FixMouseSensitivty", 1);
 		Patches::BorderlessWindow = read(kPatchesSection, "BorderlessWindowed", 1);
+		Patches::LegacyBorderlessWindow = read(kPatchesSection, "LegacyBorderlessWindowed", 0);
 		Patches::Telemetry = read(kPatchesSection, "RemoveTelemetry", 1);
 		Patches::IntroCutscene = read(kPatchesSection, "SkipIshimuraLandingCutscene", 0);
 		Patches::MainIntro = read(kPatchesSection, "SkipIntroToMainMenu", 0);
 		Patches::SkipVideos = read(kPatchesSection, "SkipLoreVideos", 0);
+		Patches::UnlockImpossible = read(kPatchesSection, "UnlockImpossible", 0);
 		Features::FrameRateCap = read(kFeaturesSection, "SafeFPSCap", 0);
 		Features::MainMenuCamera = read(kFeaturesSection, "MouseMenuCamera", 0);
+		Features::ADSMouseSensitivity = readFloat(kFeaturesSection, "ADSMouseSensitivity", 1.0f, 0.01f, 10.0f);
 	}
 }

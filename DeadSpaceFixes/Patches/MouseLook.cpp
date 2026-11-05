@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Input {
 
@@ -7,7 +8,7 @@ namespace Input {
 
 		static constexpr const char* kTag = "[Fixes/Input/MouseLook]";
 
-		const float kAimSensitivityScale = 0.15f;
+		//const float kAimSensitivityScale = 0.15f;
 
 		const float kRadToDeg = 57.29578f;
 
@@ -17,7 +18,7 @@ namespace Input {
 		void* oAimLook = nullptr;
 
 		BYTE** g_ppInputManager = nullptr;
-		BYTE* g_pInvertX = nullptr; //per player, and backwards: 0 means the axis gets flipped
+		BYTE* g_pInvertX = nullptr; //i love the random junk they did for this engine, why dafuk is it when this is 0 it inverts Y?
 		BYTE* g_pInvertY = nullptr;
 
 		//the game multiplies the camera's yaw rate by a global (1.15) pitch is left alone
@@ -99,10 +100,11 @@ namespace Input {
 			if (!g_pInvertX[playerIndex]) x = -x;
 			if (!g_pInvertY[playerIndex]) y = -y;
 
-			//straight from the mouse at the walking camera's rates, skipping the game's
-			//stick deadzone, acceleration and dt
-			*pYawDeg = x * g_WalkYawRate * kRadToDeg * kAimSensitivityScale;
-			*pPitchDeg = y * g_WalkPitchRate * kRadToDeg * kAimSensitivityScale;
+			//straight from the mouse at the walking camera's rates, skipping the games
+			//stick deadzone acceleration and dt
+			const float kVanillaFrameTime = 1.0f / 30.0f;
+			*pYawDeg = x * 25.0f * kVanillaFrameTime * Config::Features::ADSMouseSensitivity;
+			*pPitchDeg = y * 20.0f * kVanillaFrameTime * Config::Features::ADSMouseSensitivity;
 		}
 
 		//I feel like i use a silly amount of naked asm hooks

@@ -12,7 +12,7 @@ namespace Input {
 		//how hard the cursor at the edge of the screen counts as pushing the stick, 1.0 is all the way
 		const float kCursorScale = 1.0f;
 
-		void* oMenuCameraUpdate = nullptr; //takes the main menu in EAX so we can only call it from asm
+		void* oMenuCameraUpdate = nullptr;
 
 		BYTE** g_ppUiInput = nullptr; //the right stick is the two floats at +0x70, after the game's deadzone
 		BYTE** g_ppCursor = nullptr;

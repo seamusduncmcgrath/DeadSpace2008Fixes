@@ -40,6 +40,9 @@
     <Filter Include="Header Files\Features">
       <UniqueIdentifier>{B1F4E7C1-2C41-4E5A-9C2F-F46666666666}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shaders">
+      <UniqueIdentifier>{3C9F0A52-6E1B-4D8A-9B7E-5F2A1C4D8E60}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="common.h">
@@ -80,6 +83,12 @@
     </ClInclude>
     <ClInclude Include="Patches\D3D9Device.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\FXAA_DeferredEdgeAA.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
+    <ClInclude Include="Shaders\FXAA_EdgeAAFast.h">
+      <Filter>Shaders</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -161,10 +170,31 @@
     <ClCompile Include="Patches\MenuCamera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Patches\ScriptLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\SimGroupLoader.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\LegacyBorderless.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\UnlockImpossible.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\FixFullscreenGamma.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="proxy.def">
       <Filter>Source Files</Filter>
+    </None>
+    <None Include="Shaders\FXAA.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\build_shaders.bat">
+      <Filter>Shaders</Filter>
     </None>
   </ItemGroup>
 </Project>

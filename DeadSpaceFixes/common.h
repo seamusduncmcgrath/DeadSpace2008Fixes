@@ -98,11 +98,17 @@ struct sAddresses
 // ---- Function pointer typedefs for hooked engine / system APIs ----
 typedef HRESULT(__stdcall* SetSamplerState_t)(IDirect3DDevice9*, DWORD, D3DSAMPLERSTATETYPE, DWORD);
 
+typedef void(__stdcall* SetGammaRamp_t)(IDirect3DDevice9* pDevice, UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP* pRamp);
+
 typedef HWND(WINAPI* CreateWindowExA_t)(DWORD dwExStyle, LPCSTR lpClassName, LPCSTR lpWindowName, DWORD dwStyle, int X, int Y, int nWidth, int nHeight, HWND hWndParent, HMENU hMenu, HINSTANCE hInstance, LPVOID lpParam);
 
 typedef LONG(WINAPI* SetWindowLongA_t)(HWND hWnd, int nIndex, LONG dwNewLong);
 
 typedef BOOL(WINAPI* SetWindowPos_t)(HWND hWnd, HWND hWndInsertAfter, int X, int Y, int cx, int cy, UINT uFlags);
+
+typedef BOOL(WINAPI* AdjustWindowRect_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu);
+
+typedef BOOL(WINAPI* AdjustWindowRectEx_t)(LPRECT lpRect, DWORD dwStyle, BOOL bMenu, DWORD dwExStyle);
 
 typedef HRESULT(WINAPI* DirectInput8Create_t)(HINSTANCE, DWORD, REFIID, LPVOID*, LPUNKNOWN);
 

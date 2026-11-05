@@ -1,4 +1,5 @@
 #include "common.h"
+#include "Utils.h"
 #include "D3D9Device.h"
 #include "Config.h"
 #include "Patches/Patches.h"
@@ -13,7 +14,19 @@ namespace Features {
 
 			namespace {
 
+				const char* const kTag = "[Features/Graphics/D3D9]";
 				const wchar_t* const kHelperClass = L"DeadSpaceFixesHelperWnd";
+
+				IDirect3DDevice9** FindGameDevicePointer()
+				{
+					uintptr_t match = Utils::FindPattern(GetModuleHandleA(nullptr), "A1 ? ? ? ? 8B 08 8B 51 54 68 ? ? ? ? 6A 00 6A 00 50 FF D2");
+					return match ? *reinterpret_cast<IDirect3DDevice9***>(match + 1) : nullptr;
+				}
+
+				IDirect3DDevice9* ReadGameDevice(IDirect3DDevice9** ppGameDevice)
+				{
+					return ppGameDevice ? *reinterpret_cast<IDirect3DDevice9* volatile*>(ppGameDevice) : nullptr;
+				}
 				HWND g_HelperWindow = nullptr;
 
 				// A private, hidden top-level window used only as the focus/device
@@ -55,6 +68,11 @@ namespace Features {
 				d3dpp.hDeviceWindow = hwnd;
 
 				HRESULT hr = pD3D->CreateDevice(D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, hwnd, D3DCREATE_SOFTWARE_VERTEXPROCESSING, &d3dpp, &g_DummyDevice);
+				if (FAILED(hr))
+				{
+					LOG_DEBUG(kTag, "Couldn't create the dummy device (0x%08X)", static_cast<unsigned int>(hr));
+					g_DummyDevice = nullptr;
+				}
 
 				pD3D->Release();
 
@@ -70,23 +88,44 @@ namespace Features {
 				}
 			}
 
-			//Installs every D3D9 device-hook feature. Creates a transient dummy device on
-			//a private hidden helper window to steal the device vtable and attach the
-			//hooks; because all IDirect3DDevice9 instances share that vtable, the game's
-			//own device gets the hooks regardless of when this runs, so it can be applied
-			//anywhere and never blocks.
 			void InstallDeviceHooks()
 			{
-				IDirect3DDevice9* dummy = CreateDummyDevice();
-				if (!dummy) return;
+				IDirect3DDevice9** ppGameDevice = FindGameDevicePointer();
+				IDirect3DDevice9* device = ReadGameDevice(ppGameDevice);
+				bool usingDummy = false;
 
-				AnisotropicFiltering::Apply(dummy);
+				if (!device)
+				{
+					device = CreateDummyDevice();
+					usingDummy = device != nullptr;
+				}
+
+				//dummy failed, so the game is most likely partway through creating its fullscreen device, give it a few seconds
+				for (int i = 0; !device && ppGameDevice && i < 500; i++)
+				{
+					Sleep(10);
+					device = ReadGameDevice(ppGameDevice);
+				}
+
+				if (!device)
+				{
+					LOG_WARN(kTag, "Couldn't get a D3D9 device, the D3D9 hooks (brightness, anisotropic filtering, frame rate cap) aren't installed");
+					return;
+				}
+
+				LOG_DEBUG(kTag, "Installing the D3D9 hooks through the %s device", usingDummy ? "dummy" : "game's");
+
+				Fixes::Graphics::FixFullscreenBrightness::Apply(device);
+
+				AnisotropicFiltering::Apply(device);
 
 				//todo: consider making the fps cap a configurable value
 				if (Config::Features::FrameRateCap)
-					FrameRateCap::Apply(dummy);
+					FrameRateCap::Apply(device);
 
-				ReleaseDummyDevice();
+				//never release the game's device, only our own dummy
+				if (usingDummy)
+					ReleaseDummyDevice();
 			}
 		}
 	}

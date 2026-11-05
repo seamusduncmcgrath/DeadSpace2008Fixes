@@ -471,6 +471,26 @@ namespace Patches {
 				g_ExeStart = reinterpret_cast<uintptr_t>(hExe);
 				g_ExeEnd = g_ExeStart + pNtHeaders->OptionalHeader.SizeOfImage;
 
+				//The game makes its window not long after it starts, while we're still setting up on our own
+				//thread, and the window only starts borderless if CreateWindowExA is hooked by then. So the
+				//window hooks go in first. They only need the settings reader, which sits near the start of
+				//the exe so it's found almost straight away, and the slower scans for the menu come after.
+				uintptr_t readBoolSetting = Utils::FindPattern(hExe, "83 EC 18 53 8A 5C 24 20 55 56 57 8B F8 8D 44 24 17");
+				if (!readBoolSetting)
+				{
+					LOG_WARN(Tag, "Couldn't find the game's settings reader, not hooking anything");
+					return;
+				}
+				g_pReadBoolSetting = reinterpret_cast<void*>(readBoolSetting);
+
+				HMODULE hUser32 = GetModuleHandleA("user32.dll");
+				HookAt(GetProcAddress(hUser32, "CreateWindowExA"), &hkCreateWindowExA, reinterpret_cast<void**>(&oCreateWindowExA), "CreateWindowExA");
+				HookAt(GetProcAddress(hUser32, "SetWindowLongA"), &hkSetWindowLongA, reinterpret_cast<void**>(&oSetWindowLongA), "SetWindowLongA");
+				HookAt(GetProcAddress(hUser32, "SetWindowPos"), &hkSetWindowPos, reinterpret_cast<void**>(&oSetWindowPos), "SetWindowPos");
+
+				if (!g_hGameWindow && FindWindowA(GameWindowClass, nullptr))
+					LOG_WARN(Tag, "The game made its window before CreateWindowExA was hooked, it won't start borderless this time");
+
 				uintptr_t wndProc = Utils::FindPattern(hExe, "55 8B EC 83 E4 F8 83 EC 14 53 8B 5D 0C 83 FB 0F 56");
 				//in its WM_SIZE handling: push GWL_STYLE, push hWnd, call GetWindowLongA, mov [windowedStyle], eax
 				uintptr_t wmSizeStyle = wndProc ? Utils::FindPattern(hExe, "6A F0 52 FF 15 ? ? ? ? A3 ? ? ? ?", wndProc, wndProc + 0x200) : 0;
@@ -483,14 +503,13 @@ namespace Patches {
 				uintptr_t revertSettings = Utils::FindPattern(hExe, "51 0F B6 15 ? ? ? ? 8B 0D ? ? ? ? A1 ? ? ? ? 53 0F B6 1D");
 				//starts by saving Window.Width, mov eax, [settings.width] is at +6
 				uintptr_t saveSettings = Utils::FindPattern(hExe, "55 8B EC 83 E4 F8 A1 ? ? ? ? 50 B8 ? ? ? ? E8");
-				uintptr_t readBoolSetting = Utils::FindPattern(hExe, "83 EC 18 53 8A 5C 24 20 55 56 57 8B F8 8D 44 24 17");
 				uintptr_t writeBoolSetting = Utils::FindPattern(hExe, "83 EC 10 53 8A 5C 24 18 55 56 57 83 EC 10 8B F8");
 				uintptr_t setMenuValue = Utils::FindPattern(hExe, "55 8B AE 2C 02 00 00 57 33 FF 85 ED 0F 86");
 
 				if (!wndProc || !wmSizeStyle || !onValueChanged || !visualsRefresh || !scrollBoxSetOptions || !onSelect
-					|| !revertSettings || !saveSettings || !readBoolSetting || !writeBoolSetting || !setMenuValue)
+					|| !revertSettings || !saveSettings || !writeBoolSetting || !setMenuValue)
 				{
-					LOG_WARN(Tag, "Couldn't find everything the Borderless option needs, not hooking anything");
+					LOG_WARN(Tag, "Couldn't find everything the in-game Borderless option needs, only starting borderless from the saved setting");
 					return;
 				}
 
@@ -500,7 +519,6 @@ namespace Patches {
 				g_pMenuState = *reinterpret_cast<int**>(onValueChanged + 0x44);
 				g_pSettingsSnapshot = *reinterpret_cast<VideoSettings**>(revertSettings + 0xF);
 				g_pSettings = *reinterpret_cast<VideoSettings**>(saveSettings + 7);
-				g_pReadBoolSetting = reinterpret_cast<void*>(readBoolSetting);
 				g_pWriteBoolSetting = reinterpret_cast<void*>(writeBoolSetting);
 				g_pSetMenuValue = reinterpret_cast<void*>(setMenuValue);
 
@@ -511,11 +529,6 @@ namespace Patches {
 				HookAt(reinterpret_cast<void*>(onSelect), &hkOnSelect, reinterpret_cast<void**>(&oOnSelect), "OnSelect");
 				HookAt(reinterpret_cast<void*>(revertSettings), &hkRevertVideoSettings, reinterpret_cast<void**>(&oRevertVideoSettings), "RevertVideoSettings");
 				HookAt(reinterpret_cast<void*>(saveSettings), &hkSaveVideoSettings, reinterpret_cast<void**>(&oSaveVideoSettings), "SaveVideoSettings");
-
-				HMODULE hUser32 = GetModuleHandleA("user32.dll");
-				HookAt(GetProcAddress(hUser32, "CreateWindowExA"), &hkCreateWindowExA, reinterpret_cast<void**>(&oCreateWindowExA), "CreateWindowExA");
-				HookAt(GetProcAddress(hUser32, "SetWindowLongA"), &hkSetWindowLongA, reinterpret_cast<void**>(&oSetWindowLongA), "SetWindowLongA");
-				HookAt(GetProcAddress(hUser32, "SetWindowPos"), &hkSetWindowPos, reinterpret_cast<void**>(&oSetWindowPos), "SetWindowPos");
 			}
 		}
 	}

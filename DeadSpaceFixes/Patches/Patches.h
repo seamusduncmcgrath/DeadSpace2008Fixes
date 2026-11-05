@@ -11,6 +11,9 @@ namespace Patches {
 		namespace SkipVideos {
 			void Apply(HMODULE hExe);
 		}
+		namespace UnlockImpossible {
+			void Apply(HMODULE hExe);
+		}
 	}
 
 	namespace UI {
@@ -24,6 +27,9 @@ namespace Patches {
 
 	namespace System {
 		namespace BorderlessWindow {
+			void Apply();
+		}
+		namespace LegacyBorderlessWindow {
 			void Apply();
 		}
 		namespace Telemetry {
@@ -51,6 +57,15 @@ namespace Features {
 		}
 		namespace D3D9 {
 			void InstallDeviceHooks();
+		}
+	}
+
+	namespace Modding {
+		namespace ScriptLoader {
+			void Apply(HMODULE hExe);
+		}
+		namespace SimGroupLoader {
+			void Apply(HMODULE hExe);
 		}
 	}
 
@@ -92,6 +107,9 @@ namespace Fixes {
 		}
 		namespace SubtitleScale {
 			void Apply(HMODULE hExe);
+		}
+		namespace FixFullscreenBrightness {
+			void Apply(IDirect3DDevice9* pDummyDevice);
 		}
 	}
 
