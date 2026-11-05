@@ -88,6 +88,12 @@ Skips the Ishimura landing cutscene to help with speedrunning the game.
 ## (Optional) Skip Intro To Main Menu
 Skips the boot intro and lands directly on the main menu. Set `SkipIntroToMainMenu=1` in the config file.
 
+## (Optional) Impossible Difficulty Unlocked Without Playthrough
+You can use impossible difficulty with having the play through the full game first.
+
+## (Optional) Movable Main Menu Camera
+You can use your mouse to move the main menu camera if you set `MouseMenuCamera=1` in the `DeadSpaceFixes.ini`
+
 ## (Optional) Skip Loading Screen Delay
 Shortens the artificial wait on the loading screen once the level has finished loading when starting a new game. The vanilla game holds the loading screen on a ~30 second tip-cycling loop even after the level is ready; this cuts that hold to ~3 seconds, so the loading tips still appear but the screen drops almost immediately. Set `SkipLoadingScreenDelay=1` in the config file.
 
