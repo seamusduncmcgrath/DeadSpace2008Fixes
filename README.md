@@ -12,6 +12,9 @@ Adds a option to enable borderless when the game is set in windowed to the resol
   <img width="90%" height="90%"alt="logo" src="Assets/Images/borderless.png" />
 </p>
 
+## High FPS Fixes
+Most issues at high FPS are fixed, the big ones are the game no longer slows down the higher FPS, kinesis works properly, and scripting issues are fixed.
+
 ## Anisotropic Filtering
 Hooks the D3D texture sampler to force 16x anisotropic filtering. This has zero performance loss on modern hardware and hugely improves texture clarity.
 <div align="center">
@@ -50,6 +53,9 @@ Fixes the too small subtitles at resolutions above 720p; no need to squint to se
 
 ## Mouse Sensitivity Fix
 Normally the mouse sensitivity is tied to game's FPS, which means at 60+ FPS the sensitivity heavily slows down, this is fixed. Deadzones and acceleration have also been removed. If you don't like how the camera feels after this set `FixMouseSensitivty=1` in `DeadSpaceFixes.ini` to `FixMouseSensitivty=0`
+
+## Improved Anti-Aliasing
+The anti-aliasing option in the game has been replaced with FXAA, and you can use `SSAAScale` in the `DeadSpaceFixes.ini` to enable FXAA.
 
 ## Fixed fullscreen brightness
 In the fullscreen the brightness is normally far higher than it should be (no clue how it got past QA) and this has been fixed. It's most noticable in the main menu
