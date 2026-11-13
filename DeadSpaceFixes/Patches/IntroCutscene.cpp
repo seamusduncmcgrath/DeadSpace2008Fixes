@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Patches {
 
@@ -81,6 +82,9 @@ namespace Patches {
 
 			void Apply(HMODULE hExe)
 			{
+				if (!Config::Patches::IntroCutscene)
+					return;
+
 				NewGame::Patch(hExe);
 				NewGamePlus::Patch(hExe);
 			}

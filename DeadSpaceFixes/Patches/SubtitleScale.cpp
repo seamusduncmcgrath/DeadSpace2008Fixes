@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Fixes {
 
@@ -9,6 +10,13 @@ namespace Fixes {
 
 			uintptr_t subtitleHookReturn = 0;
 			void* oSubtitleSettings = nullptr;
+
+			const uint16_t* pFrameWidth = nullptr;
+			const uint16_t* pFrameHeight = nullptr;
+
+			const char* const kFrameSizeSignature = "0F B7 05 ? ? ? ? F3 0F 10 05 ? ? ? ? F3 0F 2A C8 8B 44 24 04 0F 28 D0 F3 0F 5E D1 F3 0F 11 11 0F B7 15";
+			const size_t kFrameWidthOffset = 3;
+			const size_t kFrameHeightOffset = 37;
 
 #pragma pack(push, 1)
 			struct SubtitleSettings {
@@ -33,8 +41,17 @@ namespace Fixes {
 
 				SubtitleSettings* data = *pData;
 
-				int screenWidth = GetSystemMetrics(SM_CXSCREEN);
-				int screenHeight = GetSystemMetrics(SM_CYSCREEN);
+				//the font scale is in rendered pixels so go by the size the game renders at rather than the desktop
+				int screenWidth = 0;
+				int screenHeight = 0;
+				if (pFrameWidth && pFrameHeight) {
+					screenWidth = *pFrameWidth;
+					screenHeight = *pFrameHeight;
+				}
+				if (screenWidth == 0 || screenHeight == 0) {
+					screenWidth = GetSystemMetrics(SM_CXSCREEN);
+					screenHeight = GetSystemMetrics(SM_CYSCREEN);
+				}
 
 				// 1080p = 1.5x | 4K = 3.0x
 				float subtitleMultiplier = static_cast<float>(screenHeight) / 720.0f;
@@ -81,6 +98,21 @@ namespace Fixes {
 
 			void Apply(HMODULE hExe)
 			{
+				if (!Config::Fixes::SubtitleScale)
+					return;
+
+				uintptr_t frameSizeAddress = Utils::FindPattern(hExe, kFrameSizeSignature);
+				if (frameSizeAddress != 0)
+				{
+					pFrameWidth = *reinterpret_cast<const uint16_t**>(frameSizeAddress + kFrameWidthOffset);
+					pFrameHeight = *reinterpret_cast<const uint16_t**>(frameSizeAddress + kFrameHeightOffset);
+					LOG_INFO("[Fixes/Graphics/SubtitleScale]", "Frame size at 0x%X / 0x%X", reinterpret_cast<uintptr_t>(pFrameWidth), reinterpret_cast<uintptr_t>(pFrameHeight));
+				}
+				else
+				{
+					LOG_WARN("[Fixes/Graphics/SubtitleScale]", "Couldn't find the frame size, sizing subtitles from the desktop resolution");
+				}
+
 				const char* subtitleSettingsSignature = "55 8B EC 83 E4 F8 83 EC 14 53 56 8B F1 57 8B 38 8B 4F";
 				uintptr_t subtitleAddres = Utils::FindPattern(hExe, subtitleSettingsSignature);
 

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Fixes {
 
@@ -33,6 +34,9 @@ namespace Fixes {
 
 			void Apply(HMODULE hExe)
 			{
+				if (!Config::Fixes::VSync)
+					return;
+
 				//we change the mov edx, 2 to mov edx, 0 to disable the FPS cap since theres no actual VSync in windowed
 				const char* vsyncMenuSig = "BA 02 00 00 00 EB ? 33 D2 89 15";
 				uintptr_t vsyncmenuAddress = Utils::FindPattern(hExe, vsyncMenuSig) + 1;

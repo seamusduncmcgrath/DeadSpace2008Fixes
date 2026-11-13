@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Input {
 
@@ -84,6 +85,9 @@ namespace Input {
 
 		void Apply(HMODULE hExe)
 		{
+			if (!Config::Fixes::LegacyDirectInput)
+				return;
+
 			HookDirectInput8Create();
 			LobotomiseShouldUseDirectInput(hExe);
 		}

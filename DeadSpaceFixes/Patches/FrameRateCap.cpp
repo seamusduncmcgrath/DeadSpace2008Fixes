@@ -12,13 +12,12 @@ namespace Features {
 
 			LARGE_INTEGER g_TimerFrequency;
 			LARGE_INTEGER g_LastFrameTime;
-
-			EndScene_t oEndScene = nullptr;
+			Present_t oPresent = nullptr;
 
 			//todo: set arbitrary FPS value via config
 			int g_TargetFPS = 60;
 
-			HRESULT APIENTRY hkEndScene(LPDIRECT3DDEVICE9 pDevice)
+			HRESULT APIENTRY hkPresent(LPDIRECT3DDEVICE9 pDevice, const RECT* pSourceRect, const RECT* pDestRect, HWND hDestWindowOverride, const RGNDATA* pDirtyRegion)
 			{
 				if (g_TargetFPS > 0)
 				{
@@ -51,7 +50,7 @@ namespace Features {
 						g_LastFrameTime = currentTime;
 					}
 				}
-				return oEndScene(pDevice);
+				return oPresent(pDevice, pSourceRect, pDestRect, hDestWindowOverride, pDirtyRegion);
 			}
 
 			void Apply(IDirect3DDevice9* pDummyDevice)
@@ -60,10 +59,10 @@ namespace Features {
 				QueryPerformanceCounter(&g_LastFrameTime);
 
 				void** pVTable = *reinterpret_cast<void***>(pDummyDevice);
-				void* pEndSceneTarget = pVTable[42];
+				void* pPresentTarget = pVTable[17];
 
-				MH_CreateHook(pEndSceneTarget, &hkEndScene, reinterpret_cast<LPVOID*>(&oEndScene));
-				MH_EnableHook(pEndSceneTarget);
+				MH_CreateHook(pPresentTarget, &hkPresent, reinterpret_cast<LPVOID*>(&oPresent));
+				MH_EnableHook(pPresentTarget);
 			}
 		}
 	}

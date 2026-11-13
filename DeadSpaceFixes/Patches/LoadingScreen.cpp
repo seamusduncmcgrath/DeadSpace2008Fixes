@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Fixes {
 
@@ -17,6 +18,9 @@ namespace Fixes {
 
 			void Apply(HMODULE hExe)
 			{
+				if (!Config::Fixes::LoadingScreenDelay)
+					return;
+
 				//credits to MarkerPatch for idea and name
 
 				//Shorten the artificial post-load hold on the

@@ -1,6 +1,8 @@
 #include "common.h"
 #include "Utils.h"
 
+#include "Config.h"
+
 #include <cmath>
 
 namespace Input {
@@ -100,6 +102,9 @@ namespace Input {
 
 		void Apply(HMODULE hExe)
 		{
+			if (!Config::Features::MainMenuCamera)
+				return;
+
 			const char* menuCameraSignature = "8B 48 50 F3 0F 10 81 8C 02 00 00 0F 57 E4 83 EC 0C 56 8B 35 ? ? ? ? 8B 4E 38 85 C9 57 74 1D";
 			uintptr_t menuCameraAddress = Utils::FindPattern(hExe, menuCameraSignature);
 			if (menuCameraAddress == 0)

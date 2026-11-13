@@ -58,6 +58,17 @@ namespace Features {
 		namespace D3D9 {
 			void InstallDeviceHooks();
 		}
+		namespace FXAA {
+			void ApplyStartup();
+			void Apply(HMODULE hExe);
+		}
+		namespace Supersampling {
+			void ApplyStartup(float scale);
+			void Apply(HMODULE hExe);
+		}
+		namespace D3D9On12 {
+			void Apply(HMODULE hExe);
+		}
 	}
 
 	namespace Modding {
@@ -96,6 +107,9 @@ namespace Fixes {
 
 	namespace Physics {
 		namespace Timer {
+			void Apply(HMODULE hExe);
+		}
+		namespace SolverDeactivation {
 			void Apply(HMODULE hExe);
 		}
 	}

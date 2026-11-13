@@ -3,57 +3,6 @@
 #include "Config.h"
 #include "Patches/Patches.h"
 
-#include <functional>
-#include <intrin.h>
-
-
-// A module is a named unit that optionally enables itself from Config, then
-// runs its Apply(). dllmain drives them in order, so adding a new fix/patch/
-// feature is a single row in the table (and a matching Config group flag).
-struct ModuleEntry {
-	const char* name;
-	bool (*enabled)();
-	std::function<void()> apply;
-};
-
-void ApplyAllModules()
-{
-	HMODULE hExe = GetModuleHandleA(nullptr);
-
-	//todo: this method is kinda reaching the end of it's usefulness, getting some race conditions for stuff in here
-	const ModuleEntry kModules[] = {
-		{ "Patches/System/BorderlessWindow", []() { return Config::Patches::BorderlessWindow; }, &Patches::System::BorderlessWindow::Apply },
-		{ "Patches/UI/VersionString",        []() { return true; },                             [hExe]() { Patches::UI::VersionString::Apply(hExe); } },
-		{ "Fixes/Graphics/VSync",            []() { return Config::Fixes::VSync; },              [hExe]() { Fixes::Graphics::VSync::Apply(hExe); } },
-		{ "Patches/UI/MainIntro",            []() { return Config::Patches::MainIntro; },        [hExe]() { Patches::UI::MainIntro::Apply(hExe); } },
-		{ "Patches/Gameplay/UnlockImpossible",[]() {return Config::Patches::UnlockImpossible; }, [hExe]() { Patches::Gameplay::UnlockImpossible::Apply(hExe); } },
-		{ "Patches/System/Telemetry",        []() { return Config::Patches::Telemetry; },        &Patches::System::Telemetry::Apply },
-		{ "Features/Input/SdlGamepad",       []() { return true; },                             &Features::Input::SdlGamepad::StartThread },
-		{ "Fixes/Graphics/SubtitleScale",    []() { return Config::Fixes::SubtitleScale; },      [hExe]() { Fixes::Graphics::SubtitleScale::Apply(hExe); } },
-		{ "Patches/Gameplay/IntroCutscene",  []() { return Config::Patches::IntroCutscene; },    [hExe]() { Patches::Gameplay::IntroCutscene::Apply(hExe); } },
-		{ "Patches/Gameplay/SkipVideos",     []() { return Config::Patches::SkipVideos; },       [hExe]() { Patches::Gameplay::SkipVideos::Apply(hExe); } },
-		{ "Fixes/Save/SafeStringHandling",   []() { return true; },                             [hExe]() { Fixes::Save::SafeStringHandling::Apply(hExe); } },
-		{ "Fixes/Input/LegacyDirectInput",   []() { return Config::Fixes::LegacyDirectInput; },  [hExe]() { Input::LegacyDirectInput::Apply(hExe); } },
-		{ "Fixes/UI/LoadingScreen",          []() { return Config::Fixes::LoadingScreenDelay; }, [hExe]() { Fixes::UI::LoadingScreen::Apply(hExe); } },
-		{ "Features/Graphics/D3D9",          []() { return true; },                             &Features::Graphics::D3D9::InstallDeviceHooks },
-		{ "Patches/System/LegacyBorderlessWindow", []() { return Config::Patches::LegacyBorderlessWindow; }, &Patches::System::LegacyBorderlessWindow::Apply },
-		{ "Fixes/Input/RemoveWindowsHooks",  []() { return true; },                             [hExe]() { Input::RemoveWindowsHooks::Apply(hExe); } },
-		{ "Experimental/Input/MouseLook",    []() { return Config::Fixes::FixMouseSensitivty; },[hExe]() { Input::MouseLook::Apply(hExe); } },
-		{ "Features/Input/MenuCamera",       []() { return Config::Features::MainMenuCamera; }, [hExe]() { Input::MenuCamera::Apply(hExe); } },
-		{ "Features/Modding/ScriptLoader",   []() { return true; },                             [hExe]() { Features::Modding::ScriptLoader::Apply(hExe); } },
-		{ "Features/Modding/SimGroupLoader", []() { return true; }, [hExe]() { Features::Modding::SimGroupLoader::Apply(hExe); } },
-	};
-
-	for (const ModuleEntry& m : kModules)
-	{
-		if (m.enabled())
-		{
-			LOG_DEBUG("[MainThread]", "Applying %s", m.name);
-			m.apply();
-		}
-	}
-}
-
 void ApplyStartupCPUThreadFix()
 {
 	HMODULE hExe = GetModuleHandleA(nullptr);
@@ -77,26 +26,8 @@ void ApplyCpuAffinityFix()
 	}
 }
 
-/*
-* leaving this here so i remember to finish it at some point
-bool SupportsAVX2() {
-	int cpuInfo[4] = { 0 };
-
-	__cpuid(cpuInfo, 0);
-	int nIds = cpuInfo[0];
-	if (nIds < 7)
-		return false;
-
-	__cpuidex(cpuInfo, 7, 0);
-
-	return (cpuInfo[1] & (1 << 5)) != 0;
-}
-*/
-
-DWORD WINAPI MainThread(LPVOID)
+void ApplyPatches()
 {
-	//todo: add option to switch to debug mode via flag/config option
-
 #ifdef _DEBUG
 	Utils::InitialiseConsole();
 #endif
@@ -105,15 +36,189 @@ DWORD WINAPI MainThread(LPVOID)
 
 	HMODULE hExe = GetModuleHandleA(nullptr);
 
-	/*
-	* Start applying modules from here now
-	if (Config::Features::MainMenuCamera)
-		Input::MenuCamera::Apply(hExe);
-	*/
+	Patches::System::BorderlessWindow::Apply();
 
-	ApplyAllModules();
+	Patches::UI::VersionString::Apply(hExe);
 
+	Fixes::Graphics::VSync::Apply(hExe);
+
+	Patches::UI::MainIntro::Apply(hExe);
+
+	Patches::Gameplay::UnlockImpossible::Apply(hExe);
+
+	Fixes::Save::SafeStringHandling::Apply(hExe);
+
+	Features::Input::SdlGamepad::StartThread();
+
+	Features::Graphics::Supersampling::Apply(hExe);
+
+	Fixes::Physics::Timer::Apply(hExe);
+
+	Fixes::Physics::SolverDeactivation::Apply(hExe);
+
+	Patches::System::Telemetry::Apply();
+
+	Patches::Gameplay::SkipVideos::Apply(hExe);
+
+	Patches::Gameplay::IntroCutscene::Apply(hExe);
+
+	Fixes::Graphics::SubtitleScale::Apply(hExe);
+
+	Features::Graphics::D3D9On12::Apply(hExe);
+
+	CreateThread(nullptr, 0, [](LPVOID) -> DWORD { Features::Graphics::D3D9::InstallDeviceHooks(); return 0; }, nullptr, 0, nullptr); //lowkey ignore this
+	//Features::Graphics::D3D9::InstallDeviceHooks();
+
+	Features::Graphics::FXAA::Apply(hExe); //do config
+
+	Input::LegacyDirectInput::Apply(hExe);
+
+	Fixes::UI::LoadingScreen::Apply(hExe);
+
+	Input::MenuCamera::Apply(hExe);
+
+	Input::RemoveWindowsHooks::Apply(hExe);
+
+	Input::MouseLook::Apply(hExe);
+
+	Patches::System::LegacyBorderlessWindow::Apply();
+
+	Features::Modding::ScriptLoader::Apply(hExe);
+	Features::Modding::SimGroupLoader::Apply(hExe);
+}
+
+const char* const kWinMainCallSignature = "84 5D BC 74 06 0F B7 4D C0 EB 03 6A 0A 59 51 50 6A 00 68 00 00 40 00 E8 ? ? ? ? 89 45 E4";
+WinMain_t pGameWinMain = nullptr;
+
+int WINAPI hkWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd)
+{
+	LARGE_INTEGER frequency, start, end;
+	QueryPerformanceFrequency(&frequency);
+	QueryPerformanceCounter(&start);
+
+	ApplyPatches();
+
+	QueryPerformanceCounter(&end);
+	double ms = (end.QuadPart - start.QuadPart) * 1000.0 / frequency.QuadPart;
+	LOG_INFO("[WinMain]", "Applied the patches in %.1f ms before the game started", ms);
+
+	return pGameWinMain(hInstance, hPrevInstance, lpCmdLine, nShowCmd);
+}
+
+bool WinMainRedirect(HMODULE hExe)
+{
+	uintptr_t winMainAddr = Utils::FindPattern(hExe, kWinMainCallSignature);
+	if (!winMainAddr)
+		return false;
+
+	uintptr_t call = winMainAddr + 23;
+
+	int32_t offset = *reinterpret_cast<int32_t*>(call + 1);
+	pGameWinMain = reinterpret_cast<WinMain_t>(call + 5 + offset);
+
+	int32_t newOffset = static_cast<int32_t>(reinterpret_cast<uintptr_t>(&hkWinMain)) - (call + 5); //lowkey just ignore this (quitely)
+
+	return Utils::WriteBytes(call + 1, &newOffset, sizeof(newOffset));
+}
+
+DWORD WINAPI MainThread(LPVOID)
+{
+	ApplyPatches();
+	LOG_WARN("Important!", "Failed to redirect WinMain!");
 	return 0;
+}
+
+//everything that has to happen before the game's own code starts running
+void ApplyStartupPatches()
+{
+	ApplyStartupCPUThreadFix();
+
+	//The startup VSync patch has to run really early or it's broken.
+	if (Config::Fixes::VSync)
+		Fixes::Graphics::VSync::ApplyStartup();
+
+	//has to run before the game creates its shaders
+	Features::Graphics::FXAA::ApplyStartup();
+
+	Features::Graphics::Supersampling::ApplyStartup(Config::Features::SSAAScale);
+
+	if (!WinMainRedirect(GetModuleHandleA(nullptr)))
+		CreateThread(nullptr, 0, MainThread, nullptr, 0, nullptr);
+}
+
+//the steam build uses SteamStub DRM to encrypt the code so we gotta wait till it's been decrypted
+GetStartupInfoA_t oGetStartupInfoA = nullptr;
+void** g_pStartupInfoImport = nullptr;
+
+inline bool GameCodeIsReadable()
+{
+	return Utils::FindPattern(GetModuleHandleA(nullptr), kWinMainCallSignature) != 0;
+}
+
+VOID WINAPI hkGetStartupInfoA(LPSTARTUPINFOA pInfo)
+{
+	oGetStartupInfoA(pInfo);
+
+	//already done, or something calling it before the game has been decrypted
+	if (!g_pStartupInfoImport || !GameCodeIsReadable())
+		return;
+
+	Utils::WriteBytes(reinterpret_cast<uintptr_t>(g_pStartupInfoImport), &oGetStartupInfoA, sizeof(oGetStartupInfoA));
+	g_pStartupInfoImport = nullptr;
+
+	LOG_INFO("[Startup]", "The game's code has been decrypted, patching now");
+	ApplyStartupPatches();
+}
+
+//the slot in the exe's import table that Windows filled in with pFunction
+void** FindImportSlot(HMODULE hExe, void* pFunction)
+{
+	BYTE* pBase = reinterpret_cast<BYTE*>(hExe);
+	auto pNt = reinterpret_cast<IMAGE_NT_HEADERS*>(pBase + reinterpret_cast<IMAGE_DOS_HEADER*>(pBase)->e_lfanew);
+	const IMAGE_DATA_DIRECTORY& imports = pNt->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_IMPORT];
+	if (!imports.VirtualAddress || !pFunction)
+		return nullptr;
+
+	for (auto pDescriptor = reinterpret_cast<IMAGE_IMPORT_DESCRIPTOR*>(pBase + imports.VirtualAddress); pDescriptor->Name; pDescriptor++)
+	{
+		for (auto pThunk = reinterpret_cast<IMAGE_THUNK_DATA*>(pBase + pDescriptor->FirstThunk); pThunk->u1.Function; pThunk++)
+		{
+			if (reinterpret_cast<void*>(pThunk->u1.Function) == pFunction)
+				return reinterpret_cast<void**>(&pThunk->u1.Function);
+		}
+	}
+	return nullptr;
+}
+
+//last resort for if the code is still encrypted
+DWORD WINAPI WaitForGameCodeThread(LPVOID)
+{
+	for (int i = 0; i < 2000 && !GameCodeIsReadable(); i++)
+		Sleep(5);
+
+	LOG_WARN("[Startup]", "Patching from a thread after waiting for the game's code, some patches may be too late");
+	ApplyStartupPatches();
+	return 0;
+}
+
+void WaitForGameCode()
+{
+	HMODULE hExe = GetModuleHandleA(nullptr);
+
+	//GetProcAddress follows kernel32s forward to kernelbase the same way Windows did when it filled in the import
+	oGetStartupInfoA = reinterpret_cast<GetStartupInfoA_t>(GetProcAddress(GetModuleHandleA("kernel32.dll"), "GetStartupInfoA"));
+	g_pStartupInfoImport = FindImportSlot(hExe, reinterpret_cast<void*>(oGetStartupInfoA));
+
+	void* pHook = reinterpret_cast<void*>(&hkGetStartupInfoA);
+	if (g_pStartupInfoImport && Utils::WriteBytes(reinterpret_cast<uintptr_t>(g_pStartupInfoImport), &pHook, sizeof(pHook)))
+	{
+		LOG_INFO("[Startup]", "The game's code is still encrypted (Steam DRM), waiting for the game to start before patching");
+		return;
+	}
+
+	g_pStartupInfoImport = nullptr;
+	LOG_WARN("[Startup]", "The game's code is still encrypted and GetStartupInfoA's import wasn't found");
+	CreateThread(nullptr, 0, WaitForGameCodeThread, nullptr, 0, nullptr);
 }
 
 BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
@@ -122,17 +227,16 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserv
 	{
 		DisableThreadLibraryCalls(hModule);
 
-		ApplyStartupCPUThreadFix();
+		Utils::LogStartupInfo(hModule);
 
 		ApplyCpuAffinityFix();
 
 		Config::Load();
 
-		//The startup VSync patch has to run really early or it's broken.
-		if (Config::Fixes::VSync)
-			Fixes::Graphics::VSync::ApplyStartup();
-
-		CreateThread(nullptr, 0, MainThread, hModule, 0, nullptr);
+		if (GameCodeIsReadable())
+			ApplyStartupPatches();
+		else
+			WaitForGameCode();
 	}
 	else if (ul_reason_for_call == DLL_PROCESS_DETACH)
 	{

@@ -8,6 +8,8 @@ namespace Config {
 		extern bool LegacyDirectInput;  // PatchOutDInput8
 		extern bool LoadingScreenDelay; // SkipLoadingScreenDelay
 		extern bool FixMouseSensitivty;
+		extern bool HavokSolverFix;
+		extern bool GameTimerFix;
 	}
 
 	namespace Patches {
@@ -24,6 +26,9 @@ namespace Config {
 		extern bool FrameRateCap;      // SafeFPSCap
 		extern bool MainMenuCamera;
 		extern float ADSMouseSensitivity;
+		extern bool D3D9On12;
+		extern bool UseFXAA;
+		extern float SSAAScale;
 	}
 
 	void Load();

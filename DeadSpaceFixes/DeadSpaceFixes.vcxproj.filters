@@ -90,6 +90,9 @@
     <ClInclude Include="Shaders\FXAA_EdgeAAFast.h">
       <Filter>Shaders</Filter>
     </ClInclude>
+    <ClInclude Include="Shaders\Supersampling.h">
+      <Filter>Shaders</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.cpp">
@@ -185,12 +188,33 @@
     <ClCompile Include="Patches\FixFullscreenGamma.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Patches\FXAA.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\Supersampling.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\SolverDeactivation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\DeadzoneFix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\FrameTimer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Patches\D3D9On12.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="proxy.def">
       <Filter>Source Files</Filter>
     </None>
     <None Include="Shaders\FXAA.hlsl">
+      <Filter>Shaders</Filter>
+    </None>
+    <None Include="Shaders\Supersampling.hlsl">
       <Filter>Shaders</Filter>
     </None>
     <None Include="Shaders\build_shaders.bat">

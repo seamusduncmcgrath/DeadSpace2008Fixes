@@ -1,6 +1,8 @@
 #include "common.h"
 #include "Utils.h"
 
+#include "Config.h"
+
 #include <cstdio>
 #include <intrin.h>
 #include <vector>
@@ -303,7 +305,9 @@ namespace Patches {
 				uint32_t& count = *reinterpret_cast<uint32_t*>(pOptionList + 0x30);
 
 				RECT rc = GetBorderlessRect();
-				snprintf(g_BorderlessLabel, sizeof(g_BorderlessLabel), "%d x %d , Borderless", rc.right - rc.left, rc.bottom - rc.top);
+				snprintf(g_BorderlessLabel, sizeof(g_BorderlessLabel), "%dx%d Borderless", rc.right - rc.left, rc.bottom - rc.top);
+
+				//strcpy_s(g_BorderlessLabel, "Borderless");
 
 				//the scroll box copies the strings, so a temporary list borrowing the game's is fine
 				std::vector<MenuString> items(pItems, pItems + count);
@@ -464,6 +468,9 @@ namespace Patches {
 
 			void Apply()
 			{
+				if (!Config::Patches::BorderlessWindow)
+					return;
+
 				HMODULE hExe = GetModuleHandleA(nullptr);
 
 				IMAGE_DOS_HEADER* pDosHeader = reinterpret_cast<IMAGE_DOS_HEADER*>(hExe);

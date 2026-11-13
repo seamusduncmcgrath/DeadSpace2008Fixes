@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Patches {
 
@@ -10,6 +11,9 @@ namespace Patches {
 			//Skips the boot intro ("logo" / "press start" screens) and goes straight to the main menu.
 			void Apply(HMODULE hExe)
 			{
+				if (!Config::Patches::MainIntro)
+					return;
+
 				//Boot state writes: state 2 and state 3 both become state 8 (attract).
 				const char* bootState2Sig = "C7 05 ?? ?? ?? ?? 02 00 00 00 5F 5E 5B 8B E5 5D C2 04 00";
 				uintptr_t bootState2 = Utils::FindPattern(hExe, bootState2Sig);

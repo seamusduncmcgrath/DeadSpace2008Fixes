@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Patches {
 
@@ -27,6 +28,9 @@ namespace Patches {
 
 			void Apply()
 			{
+				if (!Config::Patches::Telemetry)
+					return;
+
 				HMODULE hWinSock = GetModuleHandleA("ws2_32.dll");
 				//GetModuleHandleA can fail, guard against the NULL deref before passing to GetProcAddress
 				if (hWinSock != nullptr)

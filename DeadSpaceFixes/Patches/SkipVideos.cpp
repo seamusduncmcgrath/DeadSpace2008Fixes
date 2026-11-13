@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Patches {
 
@@ -20,6 +21,9 @@ namespace Patches {
 			//check is left alone, so videos are still only cancelled on F.
 			void Apply(HMODULE hExe)
 			{
+				if (!Config::Patches::SkipVideos)
+					return;
+
 				//Entry of sub_587210 (the shared video skip gate).
 				const char* gateSig = "83 EC 0C 55 8B 6C 24 14 8B 8D 94 02 00 00 32 C0 85 C9 0F 84 ?? ?? ?? ??";
 				uintptr_t gateAddr = Utils::FindPattern(hExe, gateSig);

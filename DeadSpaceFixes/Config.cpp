@@ -14,6 +14,8 @@ namespace Config {
 		bool LegacyDirectInput = true;
 		bool LoadingScreenDelay = false;
 		bool FixMouseSensitivty = true;
+		bool HavokSolverFix = true;
+		bool GameTimerFix = true;
 	}
 
 	namespace Patches {
@@ -30,6 +32,9 @@ namespace Config {
 		bool FrameRateCap = false;
 		bool MainMenuCamera = false;
 		float ADSMouseSensitivity = 1.0f;
+		bool D3D9On12 = false;
+		bool UseFXAA = true;
+		float SSAAScale = 1.0;
 	}
 
 	//config handling: generates DeadSpaceFixes.ini on first launch
@@ -56,7 +61,7 @@ namespace Config {
 		// Bump this whenever the config key set changes. A stale config file
 		// is then regenerated with the canonical keys instead of silently
 		// dropping options the current build doesn't know about.
-		constexpr int kConfigVersion = 8;
+		constexpr int kConfigVersion = 9;
 
 		// Every known option is declared here once and used everywhere below,
 		// so the default, the help text and the read/write logic can't drift
@@ -75,6 +80,8 @@ namespace Config {
 			{ kFixesSection,   "PatchOutDInput8", "1", "Patch out the game's DInput8 DLL usage" },
 			{ kFixesSection,   "SkipLoadingScreenDelay", "0", "Skip the artificial wait on the loading screen once the level is ready" },
 			{ kFixesSection,   "FixMouseSensitivty", "1", "Makes it so the mouse sensitivty is no longer tied to the framerate" },
+			{ kFixesSection,   "HavokSolverFix", "1", "Fixes the havok solver deactivation at high FPS. This fixes several issues, most notable to immovable chapter 10 bunks and other kinesis stuff" },
+			{ kFixesSection,   "GameTimerFix", "1", "Fixes the game's timer to prevent the game from slowing down at high FPS and fixes several game breaking bugs as a result of that" },
 			{ kPatchesSection, "BorderlessWindowed", "1", "Adds a borderless option in the games resolution list" },
 			{ kPatchesSection, "LegacyBorderlessWindowed", "0", "Run the game in a borderless window instead of fullscreen (legacy as there's a chance of the main borderless patch causing issues when switching resolution)" },
 			{ kPatchesSection, "RemoveTelemetry", "0", "Disable the game's telemetry/data collection" },
@@ -85,7 +92,9 @@ namespace Config {
 			{ kFeaturesSection, "SafeFPSCap", "0", "Cap the framerate to avoid physics/script issues" },
 			{ kFeaturesSection, "MouseMenuCamera", "0", "Allows you to move the main menu camera with a mouse, normally you have to use a controller." },
 			{ kFeaturesSection, "ADSMouseSensitivity", "1.0", "Changes the aim down sights sensitivity when FixMouseSensitivty is enabled. (only applys when FixMouseSensitivty=1)" },
-		};
+			{ kFeaturesSection, "UseFXAA", "1", "Swaps the game's basic anti-aliasing for FXAA 3.1 (will look a bit more blurry but deals with aliasing far better" },
+			{ kFeaturesSection, "SSAAScale", "1.0", "Controls the scale of the screen space anti-aliasing, which removes almost all aliasing but at a high performance cost. A value of 1.0 disables it"},
+			{ kFeaturesSection, "D3D9On12", "0", "Enabled D3D9On12 which is Microsoft's D3D9 driver implemented with D3D12, it can fix some issues on new GPUs but will reduce performance (requires a newish version of Windows 10 or 11)" }, };
 
 		// Note: the game's config lives next to the .exe (the DLL runs from the
 		// game folder), so resolve it against the working directory rather than
@@ -267,7 +276,7 @@ namespace Config {
 
 		auto read = [&](const char* section, const char* key, int def) {
 			return GetPrivateProfileIntA(section, key, def, configPath.c_str()) != 0;
-		};
+			};
 
 		//lord why is there no GetPrivateProfileFloatA
 		auto readFloat = [&](const char* section, const char* key, float def, float min, float max) {
@@ -281,7 +290,7 @@ namespace Config {
 				return def;
 
 			return value < min ? min : (value > max ? max : value);
-		};
+			};
 
 
 		Fixes::VSync = read(kFixesSection, "FixVSync", 1);
@@ -289,6 +298,8 @@ namespace Config {
 		Fixes::LegacyDirectInput = read(kFixesSection, "PatchOutDInput8", 1);
 		Fixes::LoadingScreenDelay = read(kFixesSection, "SkipLoadingScreenDelay", 0);
 		Fixes::FixMouseSensitivty = read(kFixesSection, "FixMouseSensitivty", 1);
+		Fixes::HavokSolverFix = read(kFixesSection, "HavokSolverFix", 1);
+		Fixes::GameTimerFix = read(kFixesSection, "GameTimerFix", 1);
 		Patches::BorderlessWindow = read(kPatchesSection, "BorderlessWindowed", 1);
 		Patches::LegacyBorderlessWindow = read(kPatchesSection, "LegacyBorderlessWindowed", 0);
 		Patches::Telemetry = read(kPatchesSection, "RemoveTelemetry", 1);
@@ -299,5 +310,8 @@ namespace Config {
 		Features::FrameRateCap = read(kFeaturesSection, "SafeFPSCap", 0);
 		Features::MainMenuCamera = read(kFeaturesSection, "MouseMenuCamera", 0);
 		Features::ADSMouseSensitivity = readFloat(kFeaturesSection, "ADSMouseSensitivity", 1.0f, 0.01f, 10.0f);
+		Features::UseFXAA = read(kFeaturesSection, "UseFXAA", 1);
+		Features::SSAAScale = readFloat(kFeaturesSection, "SSAAScale", 1.0, 1.0, 4.0);
+		Features::D3D9On12 = read(kFeaturesSection, "D3D9On12", 0);
 	}
 }

@@ -1,8 +1,10 @@
 #pragma once
 
-// Leveled, tagged logging. Only compiled in _DEBUG builds (the game runs a
-// proxy DLL that never ships with this overhead), so the release no-ops are
-// valid empty statements to avoid C4390 on `if (x) LOG_INFO(...);`.
+#include <Windows.h>
+
+// Leveled, tagged logging. Every build writes DeadSpaceFixes.log next to the game's exe
+// (overwritten each launch, flushed after every line so a crash doesn't lose anything).
+// Debug builds also print to the console InitialiseConsole opens, and include DEBUG lines.
 //
 // Usage:
 //   static constexpr const char* kTag = "[Fixes/Physics/Timer]";
@@ -10,9 +12,6 @@
 //   LOG_INFO (kTag, "Timer patched");                 // outcome
 //   LOG_WARN (kTag, "Failed to hook");                // recoverable problem
 //   LOG_ERROR(kTag, "SDL failed to init");            // real error
-//
-// Default threshold is Info so the noisy "Found <addr>" DEBUG lines don't
-// spam; call Utils::SetLogLevel(Utils::LogLevel::Debug) to see everything.
 namespace Utils {
 
 	enum class LogLevel { Debug, Info, Warn, Error };
@@ -21,16 +20,12 @@ namespace Utils {
 	void SetLogLevel(LogLevel level);
 	void Log(LogLevel level, const char* tag, const char* fmt, ...);
 
+	//what's running: the mod's build, the game exe and which version it is, Windows. Call first thing in DllMain.
+	void LogStartupInfo(HMODULE hModule);
+
 }
 
-#ifdef _DEBUG
 #define LOG_DEBUG(tag, ...) Utils::Log(Utils::LogLevel::Debug, tag, __VA_ARGS__)
 #define LOG_INFO(tag, ...)  Utils::Log(Utils::LogLevel::Info,  tag, __VA_ARGS__)
 #define LOG_WARN(tag, ...)  Utils::Log(Utils::LogLevel::Warn,  tag, __VA_ARGS__)
 #define LOG_ERROR(tag, ...) Utils::Log(Utils::LogLevel::Error, tag, __VA_ARGS__)
-#else
-#define LOG_DEBUG(tag, ...) ((void)0)
-#define LOG_INFO(tag, ...)  ((void)0)
-#define LOG_WARN(tag, ...)  ((void)0)
-#define LOG_ERROR(tag, ...) ((void)0)
-#endif

@@ -1,5 +1,6 @@
 #include "common.h"
 #include "Utils.h"
+#include "Config.h"
 
 namespace Patches
 {
@@ -11,6 +12,9 @@ namespace Patches
 
             void Apply(HMODULE hExe)
             {
+                if (!Config::Patches::UnlockImpossible)
+                    return;
+
                 uintptr_t patchAddr = Utils::FindPattern(hExe, sig);
 
                 if (patchAddr)

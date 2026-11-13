@@ -73,6 +73,14 @@ typedef struct _XINPUT_CAPABILITIES {
     XINPUT_VIBRATION Vibration;
 } XINPUT_CAPABILITIES, * PXINPUT_CAPABILITIES;
 
+struct D3D9ON12_ARGS_ {
+    BOOL  Enable9On12;
+    void* pD3D12Device;
+    void* ppD3D12Queues[2];
+    UINT  NumQueues;
+    UINT  NodeMask;
+};
+
 /*
 struct sAddresses
 {
@@ -96,6 +104,15 @@ struct sAddresses
 
 
 // ---- Function pointer typedefs for hooked engine / system APIs ----
+typedef int(WINAPI* WinMain_t)(HINSTANCE, HINSTANCE, LPSTR, int);
+
+typedef VOID(WINAPI* GetStartupInfoA_t)(LPSTARTUPINFOA);
+
+typedef void* (WINAPI* Create9_t)(UINT);
+typedef HRESULT(WINAPI* Create9Ex_t)(UINT, void**);
+typedef void* (WINAPI* Create9On12_t)(UINT, D3D9ON12_ARGS_*, UINT);
+typedef HRESULT(WINAPI* Create9On12Ex_t)(UINT, D3D9ON12_ARGS_*, UINT, void**);
+
 typedef HRESULT(__stdcall* SetSamplerState_t)(IDirect3DDevice9*, DWORD, D3DSAMPLERSTATETYPE, DWORD);
 
 typedef void(__stdcall* SetGammaRamp_t)(IDirect3DDevice9* pDevice, UINT iSwapChain, DWORD Flags, const D3DGAMMARAMP* pRamp);
@@ -123,6 +140,7 @@ typedef int(WINAPI* WSAStartup_t)(WORD wVersionRequested, LPWSADATA lpWSAData);
 typedef UCHAR(WINAPI* Netbios_t)(PNCB pncb);
 
 typedef HRESULT(APIENTRY* EndScene_t)(IDirect3DDevice9*);
+typedef HRESULT(APIENTRY* Present_t)(IDirect3DDevice9*, const RECT*, const RECT*, HWND, const RGNDATA*);
 
 typedef errno_t(*SaveStringCopy_t)(wchar_t* dest, wchar_t* src);
 

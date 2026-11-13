@@ -2,6 +2,9 @@
 #include "Utils.h"
 #include "Config.h"
 
+#include <cfloat>
+#include <cmath>
+
 namespace Input {
 
 	namespace MouseLook {
@@ -13,9 +16,20 @@ namespace Input {
 		const float kRadToDeg = 57.29578f;
 
 		typedef int(__stdcall* CameraLook_t)(BYTE* pCamera, float dt);
+		typedef void(__stdcall* CannonInput_t)(BYTE* pState, float dt);
 
 		CameraLook_t oCameraLook = nullptr;
 		void* oAimLook = nullptr;
+		CannonInput_t oCannonInput = nullptr;
+
+		//The chapter 4 cannon turns by input * dt * its turn speed, fine for a stick but a mouse already
+		//moves per frame, so the turn per mouse count shrank as the frame rate went up. The mouse gets the
+		//turn per count it had at 30 FPS instead, same as aiming.
+		const float kCannonMouseFrameTime = 1.0f / 30.0f;
+
+		//the cannon state whose input we scaled last frame, and what the game had read before we did
+		BYTE* g_pScaledCannonState = nullptr;
+		float g_CannonGameInput[2] = {};
 
 		BYTE** g_ppInputManager = nullptr;
 		BYTE* g_pInvertX = nullptr; //i love the random junk they did for this engine, why dafuk is it when this is 0 it inverts Y?
@@ -107,6 +121,42 @@ namespace Input {
 			*pPitchDeg = y * 20.0f * kVanillaFrameTime * Config::Features::ADSMouseSensitivity;
 		}
 
+		//PlayerMDSCannonSM reading its look input (sub_5A5230 in the GOG exe) into state+0x120 (x) and
+		//+0x124 (y). Straight after, sub_5A5040 turns the cannon by that * dt * speed * 120 degrees.
+		void __stdcall hkCannonInput(BYTE* pState, float dt)
+		{
+			float* pInput = reinterpret_cast<float*>(pState + 0x120);
+
+			//the game smooths the stick from last frame's input, so give it back what it read itself
+			if (g_pScaledCannonState == pState)
+			{
+				pInput[0] = g_CannonGameInput[0];
+				pInput[1] = g_CannonGameInput[1];
+			}
+			g_pScaledCannonState = nullptr;
+
+			oCannonInput(pState, dt);
+
+			BYTE* pInputManager = *g_ppInputManager;
+			float* pMouseStick = GetMouseStick();
+			if (!pInputManager || !pMouseStick || dt <= 0.000001f)
+				return;
+
+			//the same check the game makes before it takes the mouse input as is: the cursor moved this frame
+			const float* pCursorDelta = reinterpret_cast<const float*>(pInputManager + 0x540);
+			if (fabsf(pCursorDelta[0]) <= FLT_EPSILON && fabsf(pCursorDelta[1]) <= FLT_EPSILON)
+				return;
+
+			g_CannonGameInput[0] = pInput[0];
+			g_CannonGameInput[1] = pInput[1];
+			g_pScaledCannonState = pState;
+
+			//dividing by dt here cancels the game multiplying by it
+			float scale = kCannonMouseFrameTime / dt;
+			pInput[0] = pMouseStick[0] * scale;
+			pInput[1] = pMouseStick[1] * scale;
+		}
+
 		//I feel like i use a silly amount of naked asm hooks
 		__declspec(naked) void hkAimLook()
 		{
@@ -139,6 +189,9 @@ namespace Input {
 
 		void Apply(HMODULE hExe)
 		{
+			if (!Config::Fixes::FixMouseSensitivty)
+				return;
+
 			uintptr_t inputManagerRef = Utils::FindPattern(hExe, "51 8B 0D ? ? ? ? 8A 81 60 05 00 00");
 			if (inputManagerRef == 0)
 			{
@@ -198,6 +251,26 @@ namespace Input {
 			else
 			{
 				LOG_WARN(kTag, "Couldn't find AimLook");
+			}
+
+			//push ebp / mov ebp, esp / and esp, -16 / sub esp, 34h / push ebx / push esi / mov esi, [ebp+8] /
+			//mov eax, [esi+50h] / lea ecx, [eax+324h] / ... / call edx / mov ecx, [settings] / movss xmm0, [ecx+334h]
+			const char* cannonInputSignature = "55 8B EC 83 E4 F0 83 EC 34 53 56 8B 75 08 8B 46 50 8D 88 24 03 00 00 8B 01 8B 50 08 57 FF D2 8B 0D ? ? ? ? F3 0F 10 81 34 03 00 00";
+			uintptr_t cannonInputAddress = Utils::FindPattern(hExe, cannonInputSignature);
+
+			if (cannonInputAddress != 0)
+			{
+				void* pCannonInputTarget = reinterpret_cast<void*>(cannonInputAddress);
+
+				if (MH_CreateHook(pCannonInputTarget, &hkCannonInput, reinterpret_cast<LPVOID*>(&oCannonInput)) == MH_OK)
+				{
+					MH_EnableHook(pCannonInputTarget);
+					LOG_INFO(kTag, "Hooked CannonInput at 0x%X", cannonInputAddress);
+				}
+			}
+			else
+			{
+				LOG_WARN(kTag, "Couldn't find CannonInput");
 			}
 		}
 	}

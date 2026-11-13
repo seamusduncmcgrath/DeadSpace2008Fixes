@@ -1,4 +1,5 @@
 #include "common.h"
+#include "Config.h"
 
 namespace Patches {
 
@@ -48,6 +49,9 @@ namespace Patches {
 
 			void Apply()
 			{
+				if (!Config::Patches::LegacyBorderlessWindow)
+					return;
+
 				HMODULE hUser32 = GetModuleHandleA("user32.dll");
 				LPVOID pCreateWindowExA = GetProcAddress(hUser32, "CreateWindowExA");
 				LPVOID pAdjustWindowRect = GetProcAddress(hUser32, "AdjustWindowRect");
