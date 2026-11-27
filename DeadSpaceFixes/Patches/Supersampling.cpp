@@ -103,9 +103,6 @@ namespace Features {
 				bool g_DownscaleUnavailable = false;            //then the frame gets stretched into the back buffer instead
 				bool g_LoggedDrawFailure = false;
 				bool g_LoggedFirstFrame = false;
-				D3DFORMAT g_CheckedFrameFormat = D3DFMT_UNKNOWN;
-				D3DFORMAT g_CheckedBackBufferFormat = D3DFMT_UNKNOWN;
-				bool g_UseSrgb = false;
 
 				//one triangle covering the screen, in clip space
 				const float kTriangle[3][2] = { { -1.0f, -1.0f }, { -1.0f, 3.0f }, { 3.0f, -1.0f } };
@@ -287,33 +284,6 @@ namespace Features {
 					return true;
 				}
 
-				//averaging in linear light needs sRGB reads from the frame and sRGB writes to the back buffer
-				void CheckSrgb(IDirect3DDevice9* pDevice, D3DFORMAT frameFormat, D3DFORMAT backBufferFormat)
-				{
-					if (frameFormat == g_CheckedFrameFormat && backBufferFormat == g_CheckedBackBufferFormat)
-						return;
-
-					g_CheckedFrameFormat = frameFormat;
-					g_CheckedBackBufferFormat = backBufferFormat;
-					g_UseSrgb = false;
-
-					IDirect3D9* pD3D = nullptr;
-					D3DDEVICE_CREATION_PARAMETERS params = {};
-					D3DDISPLAYMODE mode = {};
-					if (SUCCEEDED(pDevice->GetDirect3D(&pD3D)) && SUCCEEDED(pDevice->GetCreationParameters(&params))
-						&& SUCCEEDED(pD3D->GetAdapterDisplayMode(params.AdapterOrdinal, &mode)))
-					{
-						g_UseSrgb = SUCCEEDED(pD3D->CheckDeviceFormat(params.AdapterOrdinal, params.DeviceType, mode.Format,
-								D3DUSAGE_QUERY_SRGBREAD | D3DUSAGE_QUERY_FILTER, D3DRTYPE_TEXTURE, frameFormat))
-							&& SUCCEEDED(pD3D->CheckDeviceFormat(params.AdapterOrdinal, params.DeviceType, mode.Format,
-								D3DUSAGE_RENDERTARGET | D3DUSAGE_QUERY_SRGBWRITE, D3DRTYPE_SURFACE, backBufferFormat));
-					}
-					if (pD3D)
-						pD3D->Release();
-
-					LOG_DEBUG(kTag, "Downscaling in %s", g_UseSrgb ? "linear light" : "gamma space (no sRGB support for these formats)");
-				}
-
 				//called once while recording the state block (so it knows what to save) and once for real
 				void SetPassState(IDirect3DDevice9* pDevice, IDirect3DTexture9* pFrame, IDirect3DPixelShader9* pPixelShader, const D3DSURFACE_DESC& dest)
 				{
@@ -337,7 +307,9 @@ namespace Features {
 					pDevice->SetSamplerState(0, D3DSAMP_MAGFILTER, D3DTEXF_LINEAR);
 					pDevice->SetSamplerState(0, D3DSAMP_MIPFILTER, D3DTEXF_NONE);
 					pDevice->SetSamplerState(0, D3DSAMP_MAXMIPLEVEL, 0);
-					pDevice->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, g_UseSrgb ? TRUE : FALSE);
+					//linear-light conversion happens in the downscale shader so we never toggle hardware sRGB state
+					//(enabling D3DSAMP_SRGBTEXTURE / D3DRS_SRGBWRITEENABLE conflicts with Steam Overlay's D3D9 hooks)
+					pDevice->SetSamplerState(0, D3DSAMP_SRGBTEXTURE, FALSE);
 
 					pDevice->SetRenderState(D3DRS_ZENABLE, D3DZB_FALSE);
 					pDevice->SetRenderState(D3DRS_ZWRITEENABLE, FALSE);
@@ -349,7 +321,7 @@ namespace Features {
 					pDevice->SetRenderState(D3DRS_FILLMODE, D3DFILL_SOLID);
 					pDevice->SetRenderState(D3DRS_CLIPPLANEENABLE, 0);
 					pDevice->SetRenderState(D3DRS_COLORWRITEENABLE, 0xF);
-					pDevice->SetRenderState(D3DRS_SRGBWRITEENABLE, g_UseSrgb ? TRUE : FALSE);
+					pDevice->SetRenderState(D3DRS_SRGBWRITEENABLE, FALSE);
 				}
 
 				bool Downscale(IDirect3DDevice9* pDevice, IDirect3DSurface9* pFrameSurface, const D3DSURFACE_DESC& frame,
@@ -361,8 +333,6 @@ namespace Features {
 					IDirect3DTexture9* pFrame = nullptr;
 					if (FAILED(pFrameSurface->GetContainer(kTextureInterface, reinterpret_cast<void**>(&pFrame))))
 						return false;
-
-					CheckSrgb(pDevice, frame.Format, backBuffer.Format);
 
 					//enough taps that they're at most a frame pixel apart
 					float ratio = (std::max)(static_cast<float>(frame.Width) / backBuffer.Width, static_cast<float>(frame.Height) / backBuffer.Height);
@@ -569,7 +539,7 @@ namespace Features {
 
 			void Apply(HMODULE)
 			{
-				if (Config::Features::SSAAScale)
+				if (!Config::Features::SSAAScale)
 					return;
 
 				switch (g_Status)
