@@ -94,17 +94,19 @@ namespace Features {
 				IDirect3DDevice9* device = ReadGameDevice(ppGameDevice);
 				bool usingDummy = false;
 
-				if (!device)
-				{
-					device = CreateDummyDevice();
-					usingDummy = device != nullptr;
-				}
-
-				//dummy failed, so the game is most likely partway through creating its fullscreen device, give it a few seconds
-				for (int i = 0; !device && ppGameDevice && i < 500; i++)
+				//wait for the game's device instead of creating a dummy one: this thread runs while the game's own Direct3DCreate9 /
+				//CreateDevice may be in progress, and two concurrent device creations crash D3D9 wrappers such as dgVoodoo
+				for (int i = 0; !device && ppGameDevice && i < 12000; i++)
 				{
 					Sleep(10);
 					device = ReadGameDevice(ppGameDevice);
+				}
+
+				//no game device pointer found (unknown build): fall back to the dummy device
+				if (!device && !ppGameDevice)
+				{
+					device = CreateDummyDevice();
+					usingDummy = device != nullptr;
 				}
 
 				if (!device)
